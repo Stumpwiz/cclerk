@@ -5,8 +5,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     INSTANCE_PATH = os.getenv("INSTANCE_PATH", "instance")
     SECRET_KEY = os.getenv("SECRET_KEY", "")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///instance/site.db")
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "DATABASE_URL not set.")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

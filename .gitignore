@@ -1,9 +1,18 @@
-.env
-.venv/
-__pycache__/
-*.pyc
-instance/
-.idea/
-*.log
-.pytest_cache/
-.mypy_cache/
+  # Virtual environments
+  .env/
+  .venv/
+
+  # Byte-compiled files
+  __pycache__/
+  *.py[cod]
+
+  # Config files and sensitive data
+  config.py
+  .env
+  instance
+
+  # Logs
+  *.log
+
+  # Migrations
+  .migrations/
