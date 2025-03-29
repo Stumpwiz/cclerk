@@ -11,6 +11,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "")
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "DATABASE_URL not set.")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    STATIC_PATH = os.path.join(BASE_DIR, "static")
 
 
 class DevelopmentConfig(Config):

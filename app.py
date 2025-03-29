@@ -12,12 +12,14 @@ from config import Config
 from extensions import db, migrate
 from models.user import User
 from routes import register_blueprints
-from flask_migrate import Migrate
+from commands.init_db import init_db
 
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     register_blueprints(app)
+    # Register CLI command
+    app.cli.add_command(init_db)
 
     # Load configuration
     app.config.from_object(Config)
@@ -38,6 +40,7 @@ def create_app():
             return redirect(url_for("login"))
         return render_template("home.html", items=[])
 
+    # ToDo add error message for incorrect credentials.
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":  # Handle login submission

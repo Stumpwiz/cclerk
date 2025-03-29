@@ -1,4 +1,3 @@
-from flask import Flask
 from .letters import letters_bp
 from .minutes import minutes_bp
 from .reports import reports_bp
