@@ -1,16 +1,6 @@
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    flash,
-    session,
-    send_from_directory,
-)
+from flask import Flask
 from config import Config
 from extensions import db, migrate
-from models.user import User
 from routes import register_blueprints
 from commands.init_db import init_db
 
@@ -32,49 +22,27 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Routes
-    @app.route("/")
-    def index():
-        # Redirect to log in if user is not authenticated
-        if not session.get("user_id"):
-            return redirect(url_for("login"))
-        return render_template("home.html", items=[])
-
-    # ToDo add error message for incorrect credentials.
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == "POST":  # Handle login submission
-            username = request.form["username"]
-            password = request.form["password"]
-
-            # Query the database for the user
-            user = User.query.filter_by(username=username).first()
-
-            if user and user.check_password(password):
-                session["user_id"] = user.id
-                flash("Logged in successfully!", "success")
-                return redirect(url_for("index"))
-            else:
-                flash("Invalid username or password", "danger")
-                return redirect(url_for("login"))
-
-        # Handle GET request to render the login form
-        return render_template("login.html")
-
-    @app.route("/logout")
-    def logout():
-        session.pop("user_id", None)
-        flash("Logged out successfully!", "success")
-        return redirect(url_for("login"))
-
-    @app.route("/favicon.ico")
-    def favicon():
-        return send_from_directory(
-            "static", "favicon.ico", mimetype="image/vnd.microsoft.icon"
-        )
+    # Routes are now defined in blueprint files in the routes/ directory
+    # - Main routes (/, /favicon.ico) are in routes/main_routes.py
+    # - Authentication routes (/login, /logout) are in routes/auth_routes.py
 
     with app.app_context():
         db.create_all()  # Create all tables (like the users table)
+        #
+        # # Create a dedicated directory for LaTeX compilation
+        # import os
+        # import shutil
+        # latex_compile_dir = os.path.join(app.instance_path, "latex_compile")
+        # os.makedirs(latex_compile_dir, exist_ok=True)
+        #
+        # # Copy the logo file to the LaTeX compilation directory
+        # logo_src_path = os.path.join(app.root_path, "static", "residentCouncilLogoSmall.jpg")
+        # logo_dest_path = os.path.join(latex_compile_dir, "residentCouncilLogoSmall.jpg")
+        # if os.path.exists(logo_src_path):
+        #     shutil.copy2(logo_src_path, logo_dest_path)
+        #     print(f"Logo file copied to LaTeX compilation directory: {logo_dest_path}")
+        # else:
+        #     print(f"Warning: Logo file not found at {logo_src_path}")
 
     return app
 

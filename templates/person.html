@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block title %}Persons{% endblock %}
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">Persons</h2>
+
+        <!-- Button to trigger create modal -->
+        <button type="button" class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#createPersonModal">
+            Create New Person
+        </button>
+
+        <!-- Persons Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Persons List</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Apartment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="personsTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Person Modal -->
+    <div class="modal fade" id="createPersonModal" tabindex="-1" aria-labelledby="createPersonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createPersonModalLabel">Create New Person</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createPersonForm">
+                        <div class="mb-3">
+                            <label for="first" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first" name="first">
+                        </div>
+                        <div class="mb-3">
+                            <label for="last" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last" name="last" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="apt" class="form-label">Apartment</label>
+                            <input type="text" class="form-control" id="apt" name="apt">
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image</label>
+                            <input type="text" class="form-control" id="image" name="image">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="createPersonBtn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Person Modal -->
+    <div class="modal fade" id="editPersonModal" tabindex="-1" aria-labelledby="editPersonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editPersonModalLabel">Edit Person</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPersonForm">
+                        <input type="hidden" id="editPersonId">
+                        <div class="mb-3">
+                            <label for="editFirst" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirst" name="first">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editLast" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLast" name="last" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPhone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="editPhone" name="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editApt" class="form-label">Apartment</label>
+                            <input type="text" class="form-control" id="editApt" name="apt">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editImage" class="form-label">Image</label>
+                            <input type="text" class="form-control" id="editImage" name="image">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updatePersonBtn">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for API interactions -->
+    <script>
+        // Fetch and display all persons when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchPersons();
+        });
+
+        // Function to fetch all persons from the API
+        function fetchPersons() {
+            fetch('/api/person/get')
+                .then(response => response.json())
+                .then(persons => {
+                    const tableBody = document.getElementById('personsTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    persons.forEach(person => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${person.id}</td>
+                            <td>${person.first || ''} ${person.last}</td>
+                            <td>${person.email || ''}</td>
+                            <td>${person.phone || ''}</td>
+                            <td>${person.apt || ''}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${person.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${person.id}">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // Add event listeners to edit and delete buttons
+                    document.querySelectorAll('.edit-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const personId = this.getAttribute('data-id');
+                            openEditModal(personId);
+                        });
+                    });
+
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const personId = this.getAttribute('data-id');
+                            deletePerson(personId);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching persons:', error));
+        }
+
+        // Function to open the edit modal and populate it with person data
+        function openEditModal(personId) {
+            fetch(`/api/person/get?id=${personId}`)
+                .then(response => response.json())
+                .then(person => {
+                    document.getElementById('editPersonId').value = person.id;
+                    document.getElementById('editFirst').value = person.first || '';
+                    document.getElementById('editLast').value = person.last;
+                    document.getElementById('editEmail').value = person.email || '';
+                    document.getElementById('editPhone').value = person.phone || '';
+                    document.getElementById('editApt').value = person.apt || '';
+                    document.getElementById('editImage').value = person.image || '';
+                    
+                    const editModal = new bootstrap.Modal(document.getElementById('editPersonModal'));
+                    editModal.show();
+                })
+                .catch(error => console.error('Error fetching person details:', error));
+        }
+
+        // Create a new person
+        document.getElementById('createPersonBtn').addEventListener('click', function() {
+            const first = document.getElementById('first').value;
+            const last = document.getElementById('last').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const apt = document.getElementById('apt').value;
+            const image = document.getElementById('image').value;
+            
+            fetch('/api/person/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    first: first,
+                    last: last,
+                    email: email,
+                    phone: phone,
+                    apt: apt,
+                    image: image
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createPersonModal'));
+                modal.hide();
+                document.getElementById('createPersonForm').reset();
+                fetchPersons();
+            })
+            .catch(error => console.error('Error creating person:', error));
+        });
+
+        // Update an existing person
+        document.getElementById('updatePersonBtn').addEventListener('click', function() {
+            const personId = document.getElementById('editPersonId').value;
+            const first = document.getElementById('editFirst').value;
+            const last = document.getElementById('editLast').value;
+            const email = document.getElementById('editEmail').value;
+            const phone = document.getElementById('editPhone').value;
+            const apt = document.getElementById('editApt').value;
+            const image = document.getElementById('editImage').value;
+            
+            fetch('/api/person/update', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: personId,
+                    first: first,
+                    last: last,
+                    email: email,
+                    phone: phone,
+                    apt: apt,
+                    image: image
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editPersonModal'));
+                modal.hide();
+                fetchPersons();
+            })
+            .catch(error => console.error('Error updating person:', error));
+        });
+
+        // Delete a person
+        function deletePerson(personId) {
+            if (confirm('Are you sure you want to delete this person?')) {
+                fetch(`/api/person/delete?id=${personId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fetchPersons();
+                })
+                .catch(error => console.error('Error deleting person:', error));
+            }
+        }
+    </script>
+{% endblock %}

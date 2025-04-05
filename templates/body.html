@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% block title %}Bodies{% endblock %}
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">Administrative Bodies</h2>
+
+        <!-- Button to trigger create modal -->
+        <button type="button" class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#createBodyModal">
+            Create New Body
+        </button>
+
+        <!-- Bodies Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Bodies List</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Mission</th>
+                                <th>Precedence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodiesTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Body Modal -->
+    <div class="modal fade" id="createBodyModal" tabindex="-1" aria-labelledby="createBodyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createBodyModalLabel">Create New Body</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createBodyForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mission" class="form-label">Mission</label>
+                            <textarea class="form-control" id="mission" name="mission" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="precedence" class="form-label">Precedence</label>
+                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image</label>
+                            <input type="text" class="form-control" id="image" name="image">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="createBodyBtn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Body Modal -->
+    <div class="modal fade" id="editBodyModal" tabindex="-1" aria-labelledby="editBodyModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBodyModalLabel">Edit Body</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBodyForm">
+                        <input type="hidden" id="editBodyId">
+                        <div class="mb-3">
+                            <label for="editName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMission" class="form-label">Mission</label>
+                            <textarea class="form-control" id="editMission" name="mission" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPrecedence" class="form-label">Precedence</label>
+                            <input type="number" class="form-control" id="editPrecedence" name="precedence" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editImage" class="form-label">Image</label>
+                            <input type="text" class="form-control" id="editImage" name="image">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updateBodyBtn">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for API interactions -->
+    <script>
+        // Fetch and display all bodies when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchBodies();
+        });
+
+        // Function to fetch all bodies from the API
+        function fetchBodies() {
+            fetch('/api/body/get')
+                .then(response => response.json())
+                .then(bodies => {
+                    const tableBody = document.getElementById('bodiesTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    bodies.forEach(body => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${body.id}</td>
+                            <td>${body.name}</td>
+                            <td>${body.mission || ''}</td>
+                            <td>${body.precedence}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${body.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${body.id}">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // Add event listeners to edit and delete buttons
+                    document.querySelectorAll('.edit-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const bodyId = this.getAttribute('data-id');
+                            openEditModal(bodyId);
+                        });
+                    });
+
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const bodyId = this.getAttribute('data-id');
+                            deleteBody(bodyId);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching bodies:', error));
+        }
+
+        // Function to open the edit modal and populate it with body data
+        function openEditModal(bodyId) {
+            fetch(`/api/body/get?id=${bodyId}`)
+                .then(response => response.json())
+                .then(body => {
+                    document.getElementById('editBodyId').value = body.id;
+                    document.getElementById('editName').value = body.name;
+                    document.getElementById('editMission').value = body.mission || '';
+                    document.getElementById('editPrecedence').value = body.precedence;
+                    document.getElementById('editImage').value = body.image || '';
+                    
+                    const editModal = new bootstrap.Modal(document.getElementById('editBodyModal'));
+                    editModal.show();
+                })
+                .catch(error => console.error('Error fetching body details:', error));
+        }
+
+        // Create a new body
+        document.getElementById('createBodyBtn').addEventListener('click', function() {
+            const name = document.getElementById('name').value;
+            const mission = document.getElementById('mission').value;
+            const precedence = document.getElementById('precedence').value;
+            const image = document.getElementById('image').value;
+            
+            fetch('/api/body/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    mission: mission,
+                    precedence: parseFloat(precedence),
+                    image: image
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createBodyModal'));
+                modal.hide();
+                document.getElementById('createBodyForm').reset();
+                fetchBodies();
+            })
+            .catch(error => console.error('Error creating body:', error));
+        });
+
+        // Update an existing body
+        document.getElementById('updateBodyBtn').addEventListener('click', function() {
+            const bodyId = document.getElementById('editBodyId').value;
+            const name = document.getElementById('editName').value;
+            const mission = document.getElementById('editMission').value;
+            const precedence = document.getElementById('editPrecedence').value;
+            const image = document.getElementById('editImage').value;
+            
+            fetch('/api/body/update', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: bodyId,
+                    name: name,
+                    mission: mission,
+                    precedence: parseFloat(precedence),
+                    image: image
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editBodyModal'));
+                modal.hide();
+                fetchBodies();
+            })
+            .catch(error => console.error('Error updating body:', error));
+        });
+
+        // Delete a body
+        function deleteBody(bodyId) {
+            if (confirm('Are you sure you want to delete this body?')) {
+                fetch(`/api/body/delete?id=${bodyId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fetchBodies();
+                })
+                .catch(error => console.error('Error deleting body:', error));
+            }
+        }
+    </script>
+{% endblock %}

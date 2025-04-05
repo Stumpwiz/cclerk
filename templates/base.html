@@ -16,14 +16,16 @@
         <a class="navbar-brand" href="#">Clerk App</a>
         <div class="navbar-nav">
             {% if session.get('user_id') %}
-                <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                <a class="nav-link" href="{{ url_for('reports.get_reports') }}">Reports</a>
-                <a class="nav-link" href="{{ url_for('minutes.get_minutes') }}">Minutes</a>
+                <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
                 <a class="nav-link" href="{{ url_for('letters.get_letters_html') }}">Letters</a>
                 <a class="nav-link" href="{{ url_for('rosters.get_rosters') }}">Rosters</a>
-                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                <a class="nav-link" href="{{ url_for('body.get_bodies') }}">Bodies</a>
+                <a class="nav-link" href="{{ url_for('office.get_offices') }}">Offices</a>
+                <a class="nav-link" href="{{ url_for('person.get_persons') }}">Persons</a>
+                <a class="nav-link" href="{{ url_for('term.get_terms') }}">Terms</a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
             {% else %}
-                <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
             {% endif %}
         </div>
     </div>

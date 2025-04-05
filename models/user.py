@@ -1,3 +1,5 @@
+# user.py.  A user of this project.
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import jsonify, request

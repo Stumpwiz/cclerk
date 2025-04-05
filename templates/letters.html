@@ -1,118 +1,196 @@
 {% extends 'base.html' %}
 {% block title %}Letters{% endblock %}
 {% block content %}
-<div class="container">
-    <h2 class="mb-4">Letter Template Management</h2>
-    
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Current Template</h3>
-        </div>
-        <div class="card-body">
-            {% if template %}
-                <div class="mb-3">
-                    <h4>Header</h4>
-                    <pre class="bg-light p-3 border rounded">{{ template.header }}</pre>
-                </div>
-                <div class="mb-3">
-                    <h4>Body</h4>
-                    <pre class="bg-light p-3 border rounded">{{ template.body }}</pre>
-                </div>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTemplateModal">
-                    Edit Template
-                </button>
-            {% else %}
-                <div class="alert alert-warning">
-                    No letter template found. Please initialize a template.
-                </div>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTemplateModal">
-                    Create Template
-                </button>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="card">
-        <div class="card-header">
-            <h3>Generate Letter</h3>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('letters.generate_letter') }}">
-                <div class="mb-3">
-                    <label for="recipient" class="form-label">Recipient</label>
-                    <input type="text" class="form-control" id="recipient" name="recipient" required>
-                </div>
-                <div class="mb-3">
-                    <label for="subject" class="form-label">Subject</label>
-                    <input type="text" class="form-control" id="subject" name="subject" required>
-                </div>
-                <div class="mb-3">
-                    <label for="content" class="form-label">Additional Content</label>
-                    <textarea class="form-control" id="content" name="content" rows="5"></textarea>
-                </div>
-                <button type="submit" class="btn btn-success">Generate Letter</button>
-            </form>
-        </div>
-    </div>
-</div>
+    <div class="container">
+        <h2 class="mb-4">Letter Template Management</h2>
 
-<!-- Edit Template Modal -->
-<div class="modal fade" id="editTemplateModal" tabindex="-1" aria-labelledby="editTemplateModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editTemplateModalLabel">Edit Letter Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="row mb-4">
+            <!-- User Input Div (First) -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h3>Generate Letter</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('letters.generate_letter') }}">
+                            <div class="mb-3">
+                                <label for="recipient" class="form-label">Recipient(s)</label>
+                                <input type="text" class="form-control" id="recipient" name="recipient" required>
+                                <small class="text-muted">Format: "John and Mary Smith" or "John Smith"</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="salutation" class="form-label">Salutation</label>
+                                <input type="text" class="form-control" id="salutation" name="salutation" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="apartment" class="form-label">Apartment</label>
+                                <input type="text" class="form-control" id="apartment" name="apartment" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">Generate Letter</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ url_for('letters.update_template') }}">
-                    <div class="mb-3">
-                        <label for="header" class="form-label">Header</label>
-                        <textarea class="form-control" id="header" name="header" rows="5" required>{{ template.header if template else '' }}</textarea>
-                        <small class="text-muted">Use \\ for LaTeX commands</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="body" class="form-label">Body</label>
-                        <textarea class="form-control" id="body" name="body" rows="10" required>{{ template.body if template else '' }}</textarea>
-                        <small class="text-muted">Use \\ for LaTeX commands</small>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Create Template Modal -->
-<div class="modal fade" id="createTemplateModal" tabindex="-1" aria-labelledby="createTemplateModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="createTemplateModalLabel">Create Letter Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- PDF Files Div (Right) -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h3>PDF Files</h3>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        {% if pdf_files %}
+                            <div class="mb-3">
+                                <label class="form-label">Select a PDF file:</label>
+                                <div class="pdf-list-container border rounded" style="height: 200px; overflow-y: auto;">
+                                    <div class="list-group list-group-flush">
+                                        {% for pdf in pdf_files %}
+                                            <button type="button" class="list-group-item list-group-item-action pdf-item {% if pdf == most_recent_pdf %}active{% endif %}" 
+                                                    data-pdf="{{ pdf }}" onclick="selectPdf(this)">
+                                                {{ pdf }}
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <script>
+                                function selectPdf(element) {
+                                    // Remove active class from all items
+                                    document.querySelectorAll('.pdf-item').forEach(item => {
+                                        item.classList.remove('active');
+                                    });
+
+                                    // Add active class to selected item
+                                    element.classList.add('active');
+
+                                    // Update hidden input fields
+                                    const pdfFile = element.getAttribute('data-pdf');
+                                    updatePdfSelection(pdfFile);
+                                }
+
+                                function updatePdfSelection(pdfFile) {
+                                    document.getElementById('view_pdf_file').value = pdfFile;
+                                    document.getElementById('print_pdf_file').value = pdfFile;
+                                    document.getElementById('delete_pdf_file').value = pdfFile;
+                                }
+                            </script>
+                            <div class="d-flex justify-content-between mt-auto">
+                                <form method="POST" action="{{ url_for('letters.view_pdf') }}" class="me-2">
+                                    <input type="hidden" id="view_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
+                                    <button type="submit" class="btn btn-primary">View</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('letters.print_pdf') }}" class="me-2">
+                                    <input type="hidden" id="print_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
+                                    <button type="submit" class="btn btn-info">Print</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('letters.delete_pdf') }}">
+                                    <input type="hidden" id="delete_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this PDF?')">Delete</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                No PDF files found in the latex_compile directory.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ url_for('letters.create_template') }}">
+        </div>
+
+        <!-- Template Display Div (Below) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Current Template</h3>
+            </div>
+            <div class="card-body">
+                {% if template %}
                     <div class="mb-3">
-                        <label for="new_header" class="form-label">Header</label>
-                        <textarea class="form-control" id="new_header" name="header" rows="5" required></textarea>
-                        <small class="text-muted">Use \\ for LaTeX commands</small>
+                        <h4>Header</h4>
+                        <pre class="bg-light p-3 border rounded">{{ template.header }}</pre>
                     </div>
                     <div class="mb-3">
-                        <label for="new_body" class="form-label">Body</label>
-                        <textarea class="form-control" id="new_body" name="body" rows="10" required></textarea>
-                        <small class="text-muted">Use \\ for LaTeX commands</small>
+                        <h4>Body</h4>
+                        <pre class="bg-light p-3 border rounded">{{ template.body }}</pre>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Create Template</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#editTemplateModal">
+                        Edit Template
+                    </button>
+                {% else %}
+                    <div class="alert alert-warning">
+                        No letter template found. Please initialize a template.
                     </div>
-                </form>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#createTemplateModal">
+                        Create Template
+                    </button>
+                {% endif %}
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Edit Template Modal -->
+    <div class="modal fade" id="editTemplateModal" tabindex="-1" aria-labelledby="editTemplateModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editTemplateModalLabel">Edit Letter Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('letters.update_template') }}">
+                        <div class="mb-3">
+                            <label for="header" class="form-label">Header</label>
+                            <textarea class="form-control" id="header" name="header" rows="5"
+                                      required>{{ template.header if template else '' }}</textarea>
+                            <small class="text-muted">Use \\ for LaTeX commands</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Body</label>
+                            <textarea class="form-control" id="body" name="body" rows="10"
+                                      required>{{ template.body if template else '' }}</textarea>
+                            <small class="text-muted">Use \\ for LaTeX commands</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Template Modal -->
+    <div class="modal fade" id="createTemplateModal" tabindex="-1" aria-labelledby="createTemplateModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createTemplateModalLabel">Create Letter Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('letters.create_template') }}">
+                        <div class="mb-3">
+                            <label for="new_header" class="form-label">Header</label>
+                            <textarea class="form-control" id="new_header" name="header" rows="5" required></textarea>
+                            <small class="text-muted">Use \\ for LaTeX commands</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_body" class="form-label">Body</label>
+                            <textarea class="form-control" id="new_body" name="body" rows="10" required></textarea>
+                            <small class="text-muted">Use \\ for LaTeX commands</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Create Template</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

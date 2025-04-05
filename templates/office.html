@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% block title %}Offices{% endblock %}
+{% block content %}
+    <div class="container">
+        <h2 class="mb-4">Offices</h2>
+
+        <!-- Button to trigger create modal -->
+        <button type="button" class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#createOfficeModal">
+            Create New Office
+        </button>
+
+        <!-- Filter by Body -->
+        <div class="mb-4">
+            <label for="bodyFilter" class="form-label">Filter by Body:</label>
+            <select class="form-select" id="bodyFilter">
+                <option value="">All Bodies</option>
+                <!-- Options will be populated by JavaScript -->
+            </select>
+        </div>
+
+        <!-- Offices Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Offices List</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Body</th>
+                                <th>Precedence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="officesTableBody">
+                            <!-- Table rows will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Office Modal -->
+    <div class="modal fade" id="createOfficeModal" tabindex="-1" aria-labelledby="createOfficeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createOfficeModalLabel">Create New Office</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createOfficeForm">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bodyId" class="form-label">Body</label>
+                            <select class="form-select" id="bodyId" name="bodyId" required>
+                                <option value="">Select a Body</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="precedence" class="form-label">Precedence</label>
+                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1" value="0">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="createOfficeBtn">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Office Modal -->
+    <div class="modal fade" id="editOfficeModal" tabindex="-1" aria-labelledby="editOfficeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editOfficeModalLabel">Edit Office</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editOfficeForm">
+                        <input type="hidden" id="editOfficeId">
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="editTitle" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBodyId" class="form-label">Body</label>
+                            <select class="form-select" id="editBodyId" name="bodyId" required>
+                                <option value="">Select a Body</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPrecedence" class="form-label">Precedence</label>
+                            <input type="number" class="form-control" id="editPrecedence" name="precedence" step="0.1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="updateOfficeBtn">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for API interactions -->
+    <script>
+        // Fetch and display all offices and bodies when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchBodies();
+            fetchOffices();
+        });
+
+        // Function to fetch all bodies from the API
+        function fetchBodies() {
+            fetch('/api/body/get')
+                .then(response => response.json())
+                .then(bodies => {
+                    // Populate body filter dropdown
+                    const bodyFilter = document.getElementById('bodyFilter');
+                    bodyFilter.innerHTML = '<option value="">All Bodies</option>';
+                    
+                    // Populate body dropdowns in create and edit forms
+                    const bodyIdSelect = document.getElementById('bodyId');
+                    const editBodyIdSelect = document.getElementById('editBodyId');
+                    bodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
+                    editBodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
+                    
+                    bodies.forEach(body => {
+                        // Add to filter dropdown
+                        const filterOption = document.createElement('option');
+                        filterOption.value = body.id;
+                        filterOption.textContent = body.name;
+                        bodyFilter.appendChild(filterOption);
+                        
+                        // Add to create form dropdown
+                        const createOption = document.createElement('option');
+                        createOption.value = body.id;
+                        createOption.textContent = body.name;
+                        bodyIdSelect.appendChild(createOption);
+                        
+                        // Add to edit form dropdown
+                        const editOption = document.createElement('option');
+                        editOption.value = body.id;
+                        editOption.textContent = body.name;
+                        editBodyIdSelect.appendChild(editOption);
+                    });
+                })
+                .catch(error => console.error('Error fetching bodies:', error));
+        }
+
+        // Function to fetch offices from the API
+        function fetchOffices(bodyId = '') {
+            let url = '/api/office/get';
+            if (bodyId) {
+                url += `?body_id=${bodyId}`;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(offices => {
+                    const tableBody = document.getElementById('officesTableBody');
+                    tableBody.innerHTML = '';
+                    
+                    offices.forEach(office => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${office.id}</td>
+                            <td>${office.title}</td>
+                            <td>${office.body_name}</td>
+                            <td>${office.precedence}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" data-id="${office.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${office.id}">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // Add event listeners to edit and delete buttons
+                    document.querySelectorAll('.edit-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const officeId = this.getAttribute('data-id');
+                            openEditModal(officeId);
+                        });
+                    });
+
+                    document.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const officeId = this.getAttribute('data-id');
+                            deleteOffice(officeId);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching offices:', error));
+        }
+
+        // Add event listener to body filter dropdown
+        document.getElementById('bodyFilter').addEventListener('change', function() {
+            fetchOffices(this.value);
+        });
+
+        // Function to open the edit modal and populate it with office data
+        function openEditModal(officeId) {
+            fetch(`/api/office/get?id=${officeId}`)
+                .then(response => response.json())
+                .then(office => {
+                    document.getElementById('editOfficeId').value = office.id;
+                    document.getElementById('editTitle').value = office.title;
+                    document.getElementById('editBodyId').value = office.body_id;
+                    document.getElementById('editPrecedence').value = office.precedence;
+                    
+                    const editModal = new bootstrap.Modal(document.getElementById('editOfficeModal'));
+                    editModal.show();
+                })
+                .catch(error => console.error('Error fetching office details:', error));
+        }
+
+        // Create a new office
+        document.getElementById('createOfficeBtn').addEventListener('click', function() {
+            const title = document.getElementById('title').value;
+            const bodyId = document.getElementById('bodyId').value;
+            const precedence = document.getElementById('precedence').value;
+            
+            fetch('/api/office/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    body_id: bodyId,
+                    precedence: parseFloat(precedence)
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficeModal'));
+                modal.hide();
+                document.getElementById('createOfficeForm').reset();
+                fetchOffices(document.getElementById('bodyFilter').value);
+            })
+            .catch(error => console.error('Error creating office:', error));
+        });
+
+        // Update an existing office
+        document.getElementById('updateOfficeBtn').addEventListener('click', function() {
+            const officeId = document.getElementById('editOfficeId').value;
+            const title = document.getElementById('editTitle').value;
+            const bodyId = document.getElementById('editBodyId').value;
+            const precedence = document.getElementById('editPrecedence').value;
+            
+            fetch('/api/office/update', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: officeId,
+                    title: title,
+                    body_id: bodyId,
+                    precedence: parseFloat(precedence)
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
+                modal.hide();
+                fetchOffices(document.getElementById('bodyFilter').value);
+            })
+            .catch(error => console.error('Error updating office:', error));
+        });
+
+        // Delete an office
+        function deleteOffice(officeId) {
+            if (confirm('Are you sure you want to delete this office?')) {
+                fetch(`/api/office/delete?id=${officeId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fetchOffices(document.getElementById('bodyFilter').value);
+                })
+                .catch(error => console.error('Error deleting office:', error));
+            }
+        }
+    </script>
+{% endblock %}

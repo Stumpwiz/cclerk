@@ -80,31 +80,6 @@ def test_letters_route(client):
     assert json_data == {"message": "This is the letters endpoint"}
 
 
-def test_minutes_get_route(client):
-    # Test the minutes GET API endpoint
-    response = client.get("/api/minutes/get")
-    assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data == {"message": "This is the minutes endpoint"}
-
-
-def test_minutes_edit_route(client):
-    # Test the minutes edit API endpoint
-    # Note: This route requires admin role, but we're just testing the route itself
-    response = client.post("/api/minutes/edit")
-    # Without proper authentication, we expect a redirect or error
-    # The actual behavior depends on how the role_required decorator is implemented
-    assert response.status_code in [302, 401, 403]
-
-
-def test_reports_route(client):
-    # Test the reports API endpoint
-    response = client.get("/api/reports/get")
-    assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data == {"message": "This is the reports endpoint"}
-
-
 def test_rosters_route(client):
     # Test the rosters API endpoint
     response = client.get("/api/rosters/get")
@@ -119,3 +94,35 @@ def test_users_route(client):
     assert response.status_code == 200
     json_data = response.get_json()
     assert json_data == {"message": "This is the users endpoint"}
+
+
+def test_body_route(client):
+    # Test the body API endpoint
+    response = client.get("/api/body/get")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert isinstance(json_data, list)
+
+
+def test_office_route(client):
+    # Test the office API endpoint
+    response = client.get("/api/office/get")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert isinstance(json_data, list)
+
+
+def test_person_route(client):
+    # Test the person API endpoint
+    response = client.get("/api/person/get")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert isinstance(json_data, list)
+
+
+def test_term_route(client):
+    # Test the term API endpoint
+    response = client.get("/api/term/get")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert isinstance(json_data, list)
