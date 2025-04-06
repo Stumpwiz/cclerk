@@ -9,6 +9,17 @@
             Create New Body
         </button>
 
+        <!-- Image Display Window -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Selected Body Image</h3>
+            </div>
+            <div class="card-body text-center">
+                <img id="selectedBodyImage" src="" alt="No image selected" class="img-fluid" style="max-height: 300px;">
+                <p id="selectedBodyName" class="mt-2 fw-bold"></p>
+            </div>
+        </div>
+
         <!-- Bodies Table -->
         <div class="card mb-4">
             <div class="card-header">
@@ -22,6 +33,7 @@
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Mission</th>
+                                <th>Image</th>
                                 <th>Precedence</th>
                                 <th>Actions</th>
                             </tr>
@@ -29,10 +41,11 @@
                         <tbody id="bodiesTableBody">
                             {% if bodies %}
                                 {% for body in bodies %}
-                                    <tr>
+                                    <tr class="body-row" data-id="{{ body.body_id }}" data-image="{{ body.body_image or '' }}">
                                         <td>{{ body.body_id }}</td>
                                         <td>{{ body.name }}</td>
                                         <td class="mission-cell">{{ body.mission or '' }}</td>
+                                        <td>{{ body.body_image or '' }}</td>
                                         <td>{{ body.body_precedence }}</td>
                                         <td>
                                             <div class="action-buttons">
@@ -44,7 +57,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="5" class="text-center">
+                                    <td colspan="6" class="text-center">
                                         <div class="alert alert-info mb-0">
                                             No bodies available.
                                         </div>
@@ -142,19 +155,64 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Add event listeners to edit and delete buttons
             document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent row click event
                     const bodyId = this.getAttribute('data-id');
                     openEditModal(bodyId);
                 });
             });
 
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent row click event
                     const bodyId = this.getAttribute('data-id');
                     deleteBody(bodyId);
                 });
             });
+
+            // Add event listeners to body rows for selection
+            document.querySelectorAll('.body-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    selectBody(this);
+                });
+            });
+
+            // Select the highest precedence body (first in the list) by default
+            const firstBodyRow = document.querySelector('.body-row');
+            if (firstBodyRow) {
+                selectBody(firstBodyRow);
+            }
         });
+
+        // Function to select a body and display its image
+        function selectBody(row) {
+            // Remove selected class from all rows
+            document.querySelectorAll('.body-row').forEach(r => {
+                r.classList.remove('table-primary');
+            });
+
+            // Add selected class to the clicked row
+            row.classList.add('table-primary');
+
+            // Get body data from the row
+            const bodyId = row.getAttribute('data-id');
+            const bodyImage = row.getAttribute('data-image');
+            const bodyName = row.querySelector('td:nth-child(2)').textContent;
+
+            // Update the image display
+            const imgElement = document.getElementById('selectedBodyImage');
+            const nameElement = document.getElementById('selectedBodyName');
+
+            if (bodyImage) {
+                imgElement.src = `/static/${bodyImage}`;
+                imgElement.alt = `Image of ${bodyName}`;
+            } else {
+                imgElement.src = '';
+                imgElement.alt = 'No image available';
+            }
+
+            nameElement.textContent = bodyName;
+        }
 
         // Function to open the edit modal and populate it with body data
         function openEditModal(bodyId) {
