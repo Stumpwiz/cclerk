@@ -2,6 +2,7 @@
 
 from extensions import db
 
+
 class Person(db.Model):
     __tablename__ = 'person'
 
@@ -11,7 +12,6 @@ class Person(db.Model):
     email = db.Column(db.String(45), nullable=True, default=None)
     phone = db.Column(db.String(19), nullable=True, default=None)
     apt = db.Column(db.String(4), nullable=True, default=None)
-    person_image = db.Column('personimage', db.String(45), nullable=True, default=None)
 
     def __repr__(self):
         return f'<Person {self.first} {self.last}>'

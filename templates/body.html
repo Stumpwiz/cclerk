@@ -4,19 +4,17 @@
     <div class="container">
         <h2 class="mb-4">Administrative Bodies</h2>
 
-        <!-- Button to trigger create modal -->
-        <button type="button" class="btn btn-success create-body-btn" data-bs-toggle="modal" data-bs-target="#createBodyModal">
-            Create New Body
-        </button>
+        <!-- Top section with button and image display -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <!-- Button to trigger create modal -->
+            <button type="button" class="btn btn-success create-body-btn" data-bs-toggle="modal" data-bs-target="#createBodyModal">
+                Create New Body
+            </button>
 
-        <!-- Image Display Window -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3>Selected Body Image</h3>
-            </div>
-            <div class="card-body text-center">
-                <img id="selectedBodyImage" src="" alt="No image selected" class="img-fluid" style="max-height: 300px;">
-                <p id="selectedBodyName" class="mt-2 fw-bold"></p>
+            <!-- Image Display -->
+            <div class="image-display-container">
+                <img id="selectedBodyImage" src="" alt="No image selected" class="img-fluid">
+                <p id="selectedBodyName" class="mt-1 fw-bold small"></p>
             </div>
         </div>
 
@@ -30,7 +28,6 @@
                     <table class="table table-striped body-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Name</th>
                                 <th>Mission</th>
                                 <th>Image</th>
@@ -42,7 +39,6 @@
                             {% if bodies %}
                                 {% for body in bodies %}
                                     <tr class="body-row" data-id="{{ body.body_id }}" data-image="{{ body.body_image or '' }}">
-                                        <td>{{ body.body_id }}</td>
                                         <td>{{ body.name }}</td>
                                         <td class="mission-cell">{{ body.mission or '' }}</td>
                                         <td>{{ body.body_image or '' }}</td>
@@ -57,7 +53,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center">
+                                    <td colspan="5" class="text-center">
                                         <div class="alert alert-info mb-0">
                                             No bodies available.
                                         </div>
@@ -182,6 +178,12 @@
             if (firstBodyRow) {
                 selectBody(firstBodyRow);
             }
+
+            // Add event listener for when the create body modal is shown
+            document.getElementById('createBodyModal').addEventListener('shown.bs.modal', function() {
+                // Focus on the name field
+                document.getElementById('name').focus();
+            });
         });
 
         // Function to select a body and display its image
@@ -197,7 +199,7 @@
             // Get body data from the row
             const bodyId = row.getAttribute('data-id');
             const bodyImage = row.getAttribute('data-image');
-            const bodyName = row.querySelector('td:nth-child(2)').textContent;
+            const bodyName = row.querySelector('td:nth-child(1)').textContent;
 
             // Update the image display
             const imgElement = document.getElementById('selectedBodyImage');

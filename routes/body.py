@@ -128,8 +128,8 @@ def view_bodies():
     This route is for the web interface.
     It renders the body.html template with the body data.
     """
-    # Query all bodies ordered by body_precedence
-    bodies = Body.query.order_by(Body.body_precedence).all()
+    # Query all bodies ordered by name
+    bodies = Body.query.order_by(Body.name).all()
 
     # Render the template with the bodies data
     return render_template("body.html", bodies=bodies)

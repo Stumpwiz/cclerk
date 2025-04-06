@@ -1,44 +1,65 @@
 {% extends 'base.html' %}
-{% block title %}Offices{% endblock %}
+{% block title %}Office (Precedence){% endblock %}
+
+{% block styles %}
+<style>
+    .body-item {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .body-item:hover {
+        background-color: #f8f9fa;
+    }
+    .body-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .office-actions {
+        visibility: hidden;
+    }
+    .list-group-item:hover .office-actions {
+        visibility: visible;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <h2 class="mb-4">Offices</h2>
 
-        <!-- Button to trigger create modal -->
-        <button type="button" class="btn btn-success mb-4" data-bs-toggle="modal" data-bs-target="#createOfficeModal">
-            Create New Office
-        </button>
-
-        <!-- Filter by Body -->
-        <div class="mb-4">
-            <label for="bodyFilter" class="form-label">Filter by Body:</label>
-            <select class="form-select" id="bodyFilter">
-                <option value="">All Bodies</option>
-                <!-- Options will be populated by JavaScript -->
-            </select>
-        </div>
-
-        <!-- Offices Table -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h3>Offices List</h3>
+        <div class="row">
+            <!-- Bodies List (Left Panel) -->
+            <div class="col-md-3">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>Bodies</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="bodiesList">
+                            <!-- Body items will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Title</th>
-                                <th>Body</th>
-                                <th>Precedence</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="officesTableBody">
-                            <!-- Table rows will be populated by JavaScript -->
-                        </tbody>
-                    </table>
+
+            <!-- Offices for Selected Body (Right Panel) -->
+            <div class="col-md-9">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 id="selectedBodyName">Select a Body</h3>
+                    <button type="button" class="btn btn-success" id="showCreateModalBtn" disabled>
+                        Create New Office
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Office (Precedence)</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group" id="officesList">
+                            <!-- Office items will be populated by JavaScript -->
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,15 +77,9 @@
                     <form id="createOfficeForm">
                         <div class="mb-3">
                             <label for="title" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
+                            <input type="text" class="form-control" id="title" name="title" required autofocus>
                         </div>
-                        <div class="mb-3">
-                            <label for="bodyId" class="form-label">Body</label>
-                            <select class="form-select" id="bodyId" name="bodyId" required>
-                                <option value="">Select a Body</option>
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
-                        </div>
+                        <input type="hidden" id="bodyId" name="bodyId">
                         <div class="mb-3">
                             <label for="precedence" class="form-label">Precedence</label>
                             <input type="number" class="form-control" id="precedence" name="precedence" step="0.1" value="0">
@@ -73,7 +88,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="createOfficeBtn">Create</button>
+                    <button type="button" class="btn btn-primary" id="submitCreateOfficeBtn">Create</button>
                 </div>
             </div>
         </div>
@@ -117,10 +132,11 @@
 
     <!-- JavaScript for API interactions -->
     <script>
-        // Fetch and display all offices and bodies when the page loads
+        let selectedBodyId = null;
+
+        // Fetch and display all bodies when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchBodies();
-            fetchOffices();
         });
 
         // Function to fetch all bodies from the API
@@ -128,89 +144,125 @@
             fetch('/api/body/get')
                 .then(response => response.json())
                 .then(bodies => {
-                    // Populate body filter dropdown
-                    const bodyFilter = document.getElementById('bodyFilter');
-                    bodyFilter.innerHTML = '<option value="">All Bodies</option>';
-                    
-                    // Populate body dropdowns in create and edit forms
-                    const bodyIdSelect = document.getElementById('bodyId');
+                    // Sort bodies alphabetically by name
+                    bodies.sort((a, b) => a.name.localeCompare(b.name));
+
+                    // Populate bodies list
+                    const bodiesList = document.getElementById('bodiesList');
+                    bodiesList.innerHTML = '';
+
+                    // Populate body dropdown in edit form
                     const editBodyIdSelect = document.getElementById('editBodyId');
-                    bodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
                     editBodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
-                    
-                    bodies.forEach(body => {
-                        // Add to filter dropdown
-                        const filterOption = document.createElement('option');
-                        filterOption.value = body.id;
-                        filterOption.textContent = body.name;
-                        bodyFilter.appendChild(filterOption);
-                        
-                        // Add to create form dropdown
-                        const createOption = document.createElement('option');
-                        createOption.value = body.id;
-                        createOption.textContent = body.name;
-                        bodyIdSelect.appendChild(createOption);
-                        
+
+                    bodies.forEach((body, index) => {
+                        // Add to bodies list
+                        const listItem = document.createElement('li');
+                        listItem.className = 'list-group-item body-item';
+                        listItem.textContent = body.name;
+                        listItem.dataset.id = body.id;
+                        listItem.addEventListener('click', function() {
+                            selectBody(body.id, body.name);
+                        });
+                        bodiesList.appendChild(listItem);
+
                         // Add to edit form dropdown
                         const editOption = document.createElement('option');
                         editOption.value = body.id;
                         editOption.textContent = body.name;
                         editBodyIdSelect.appendChild(editOption);
+
+                        // Select the first body by default
+                        if (index === 0) {
+                            selectBody(body.id, body.name);
+                        }
                     });
                 })
                 .catch(error => console.error('Error fetching bodies:', error));
         }
 
-        // Function to fetch offices from the API
-        function fetchOffices(bodyId = '') {
-            let url = '/api/office/get';
-            if (bodyId) {
-                url += `?body_id=${bodyId}`;
-            }
-            
-            fetch(url)
+        // Function to select a body
+        function selectBody(bodyId, bodyName) {
+            // Update selected body
+            selectedBodyId = bodyId;
+
+            // Update UI to show selected body
+            document.querySelectorAll('.body-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.id == bodyId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update selected body name
+            document.getElementById('selectedBodyName').textContent = bodyName;
+
+            // Enable create office button
+            document.getElementById('showCreateModalBtn').disabled = false;
+
+            // Set the body ID in the create form
+            document.getElementById('bodyId').value = bodyId;
+
+            // Fetch offices for the selected body
+            fetchOfficesForBody(bodyId);
+        }
+
+        // Function to fetch offices for a specific body
+        function fetchOfficesForBody(bodyId) {
+            fetch(`/api/office/get?body_id=${bodyId}`)
                 .then(response => response.json())
                 .then(offices => {
-                    const tableBody = document.getElementById('officesTableBody');
-                    tableBody.innerHTML = '';
-                    
-                    offices.forEach(office => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${office.id}</td>
-                            <td>${office.title}</td>
-                            <td>${office.body_name}</td>
-                            <td>${office.precedence}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary edit-btn" data-id="${office.id}">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${office.id}">Delete</button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
+                    // Sort offices by precedence
+                    offices.sort((a, b) => a.precedence - b.precedence);
 
-                    // Add event listeners to edit and delete buttons
-                    document.querySelectorAll('.edit-btn').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const officeId = this.getAttribute('data-id');
-                            openEditModal(officeId);
-                        });
-                    });
+                    // Populate offices list
+                    const officesList = document.getElementById('officesList');
+                    officesList.innerHTML = '';
 
-                    document.querySelectorAll('.delete-btn').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const officeId = this.getAttribute('data-id');
-                            deleteOffice(officeId);
+                    if (offices.length === 0) {
+                        const emptyItem = document.createElement('li');
+                        emptyItem.className = 'list-group-item text-center';
+                        emptyItem.textContent = 'No offices found for this body.';
+                        officesList.appendChild(emptyItem);
+                    } else {
+                        offices.forEach(office => {
+                            const listItem = document.createElement('li');
+                            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                            // Display office name and precedence
+                            const nameSpan = document.createElement('span');
+                            nameSpan.textContent = `${office.title} (${parseFloat(office.precedence).toFixed(1)})`;
+                            listItem.appendChild(nameSpan);
+
+                            // Add action buttons
+                            const actionDiv = document.createElement('div');
+                            actionDiv.className = 'office-actions';
+
+                            const editBtn = document.createElement('button');
+                            editBtn.className = 'btn btn-sm btn-primary me-2';
+                            editBtn.textContent = 'Edit';
+                            editBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Prevent event bubbling
+                                openEditModal(office.id);
+                            });
+                            actionDiv.appendChild(editBtn);
+
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.className = 'btn btn-sm btn-danger';
+                            deleteBtn.textContent = 'Delete';
+                            deleteBtn.addEventListener('click', function(e) {
+                                e.stopPropagation(); // Prevent event bubbling
+                                deleteOffice(office.id);
+                            });
+                            actionDiv.appendChild(deleteBtn);
+
+                            listItem.appendChild(actionDiv);
+                            officesList.appendChild(listItem);
                         });
-                    });
+                    }
                 })
                 .catch(error => console.error('Error fetching offices:', error));
         }
-
-        // Add event listener to body filter dropdown
-        document.getElementById('bodyFilter').addEventListener('change', function() {
-            fetchOffices(this.value);
-        });
 
         // Function to open the edit modal and populate it with office data
         function openEditModal(officeId) {
@@ -221,19 +273,29 @@
                     document.getElementById('editTitle').value = office.title;
                     document.getElementById('editBodyId').value = office.body_id;
                     document.getElementById('editPrecedence').value = office.precedence;
-                    
+
                     const editModal = new bootstrap.Modal(document.getElementById('editOfficeModal'));
                     editModal.show();
                 })
                 .catch(error => console.error('Error fetching office details:', error));
         }
 
-        // Create a new office
-        document.getElementById('createOfficeBtn').addEventListener('click', function() {
+        // Show the create modal when the create button is clicked
+        document.getElementById('showCreateModalBtn').addEventListener('click', function() {
+            // Set the body ID in the create form
+            document.getElementById('bodyId').value = selectedBodyId;
+
+            // Show the create modal
+            const createModal = new bootstrap.Modal(document.getElementById('createOfficeModal'));
+            createModal.show();
+        });
+
+        // Handle create form submission
+        document.getElementById('submitCreateOfficeBtn').addEventListener('click', function() {
             const title = document.getElementById('title').value;
-            const bodyId = document.getElementById('bodyId').value;
+            const bodyId = document.getElementById('bodyId').value || selectedBodyId;
             const precedence = document.getElementById('precedence').value;
-            
+
             fetch('/api/office/create', {
                 method: 'POST',
                 headers: {
@@ -250,7 +312,9 @@
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficeModal'));
                 modal.hide();
                 document.getElementById('createOfficeForm').reset();
-                fetchOffices(document.getElementById('bodyFilter').value);
+
+                // Refresh the offices list for the selected body
+                fetchOfficesForBody(selectedBodyId);
             })
             .catch(error => console.error('Error creating office:', error));
         });
@@ -261,7 +325,7 @@
             const title = document.getElementById('editTitle').value;
             const bodyId = document.getElementById('editBodyId').value;
             const precedence = document.getElementById('editPrecedence').value;
-            
+
             fetch('/api/office/update', {
                 method: 'PUT',
                 headers: {
@@ -278,7 +342,9 @@
             .then(data => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
                 modal.hide();
-                fetchOffices(document.getElementById('bodyFilter').value);
+
+                // Refresh the offices list for the selected body
+                fetchOfficesForBody(selectedBodyId);
             })
             .catch(error => console.error('Error updating office:', error));
         });
@@ -291,7 +357,8 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    fetchOffices(document.getElementById('bodyFilter').value);
+                    // Refresh the offices list for the selected body
+                    fetchOfficesForBody(selectedBodyId);
                 })
                 .catch(error => console.error('Error deleting office:', error));
             }

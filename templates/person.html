@@ -16,10 +16,9 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped person-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
@@ -66,10 +65,6 @@
                             <label for="apt" class="form-label">Apartment</label>
                             <input type="text" class="form-control" id="apt" name="apt">
                         </div>
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Image</label>
-                            <input type="text" class="form-control" id="image" name="image">
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -111,10 +106,6 @@
                             <label for="editApt" class="form-label">Apartment</label>
                             <input type="text" class="form-control" id="editApt" name="apt">
                         </div>
-                        <div class="mb-3">
-                            <label for="editImage" class="form-label">Image</label>
-                            <input type="text" class="form-control" id="editImage" name="image">
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -130,6 +121,12 @@
         // Fetch and display all persons when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchPersons();
+
+            // Add event listener for when the create person modal is shown
+            document.getElementById('createPersonModal').addEventListener('shown.bs.modal', function() {
+                // Focus on the first name field
+                document.getElementById('first').focus();
+            });
         });
 
         // Function to fetch all persons from the API
@@ -139,18 +136,19 @@
                 .then(persons => {
                     const tableBody = document.getElementById('personsTableBody');
                     tableBody.innerHTML = '';
-                    
+
                     persons.forEach(person => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${person.id}</td>
                             <td>${person.first || ''} ${person.last}</td>
                             <td>${person.email || ''}</td>
                             <td>${person.phone || ''}</td>
                             <td>${person.apt || ''}</td>
                             <td>
-                                <button class="btn btn-sm btn-primary edit-btn" data-id="${person.id}">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn" data-id="${person.id}">Delete</button>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-primary edit-btn" data-id="${person.id}">Edit</button>
+                                    <button class="btn btn-sm btn-danger delete-btn" data-id="${person.id}">Delete</button>
+                                </div>
                             </td>
                         `;
                         tableBody.appendChild(row);
@@ -185,23 +183,111 @@
                     document.getElementById('editEmail').value = person.email || '';
                     document.getElementById('editPhone').value = person.phone || '';
                     document.getElementById('editApt').value = person.apt || '';
-                    document.getElementById('editImage').value = person.image || '';
-                    
+
                     const editModal = new bootstrap.Modal(document.getElementById('editPersonModal'));
                     editModal.show();
                 })
                 .catch(error => console.error('Error fetching person details:', error));
         }
 
+        // Validation functions
+        function validateEmail(email) {
+            if (!email) return true; // Email is optional
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        function validatePhone(phone) {
+            if (!phone) return true; // Phone is optional
+            const phoneRegex = /^\(\d{3}\) \d{3}-\d{4}$/; // Format: (123) 456-7890
+            return phoneRegex.test(phone);
+        }
+
+        function validateApartment(apt) {
+            if (!apt) return true; // Apartment is optional
+
+            // Check if it's exactly 4 characters
+            if (apt.length !== 4) return false;
+
+            // Check if first character is 'L', 'K', or 'S'
+            const firstChar = apt.charAt(0);
+            if (firstChar !== 'L' && firstChar !== 'K' && firstChar !== 'S') return false;
+
+            // Check if last 3 characters are numeric
+            const numericPart = apt.substring(1);
+            if (!/^\d{3}$/.test(numericPart)) return false;
+
+            // Check if numeric part is in range 101-799
+            const numValue = parseInt(numericPart, 10);
+            return numValue >= 101 && numValue <= 799;
+        }
+
+        // Function to display validation errors
+        function showValidationError(inputId, message) {
+            const input = document.getElementById(inputId);
+            input.classList.add('is-invalid');
+
+            // Check if error message element already exists
+            let errorDiv = input.nextElementSibling;
+            if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                input.parentNode.insertBefore(errorDiv, input.nextElementSibling);
+            }
+
+            errorDiv.textContent = message;
+        }
+
+        // Function to clear validation errors
+        function clearValidationErrors() {
+            document.querySelectorAll('.is-invalid').forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+        }
+
         // Create a new person
         document.getElementById('createPersonBtn').addEventListener('click', function() {
+            // Clear previous validation errors
+            clearValidationErrors();
+
             const first = document.getElementById('first').value;
             const last = document.getElementById('last').value;
             const email = document.getElementById('email').value;
             const phone = document.getElementById('phone').value;
             const apt = document.getElementById('apt').value;
-            const image = document.getElementById('image').value;
-            
+
+            // Validate form fields
+            let isValid = true;
+
+            // Last name is required
+            if (!last) {
+                showValidationError('last', 'Last name is required');
+                isValid = false;
+            }
+
+            // Validate email if provided
+            if (email && !validateEmail(email)) {
+                showValidationError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Validate phone if provided
+            if (phone && !validatePhone(phone)) {
+                showValidationError('phone', 'Please enter a valid phone number in format (123) 456-7890');
+                isValid = false;
+            }
+
+            // Validate apartment if provided
+            if (apt && !validateApartment(apt)) {
+                showValidationError('apt', 'Apartment must be 4 characters: first character L, K, or S, followed by 3 digits (101-799)');
+                isValid = false;
+            }
+
+            // If validation fails, stop here
+            if (!isValid) {
+                return;
+            }
+
             fetch('/api/person/create', {
                 method: 'POST',
                 headers: {
@@ -212,8 +298,7 @@
                     last: last,
                     email: email,
                     phone: phone,
-                    apt: apt,
-                    image: image
+                    apt: apt
                 }),
             })
             .then(response => response.json())
@@ -228,14 +313,48 @@
 
         // Update an existing person
         document.getElementById('updatePersonBtn').addEventListener('click', function() {
+            // Clear previous validation errors
+            clearValidationErrors();
+
             const personId = document.getElementById('editPersonId').value;
             const first = document.getElementById('editFirst').value;
             const last = document.getElementById('editLast').value;
             const email = document.getElementById('editEmail').value;
             const phone = document.getElementById('editPhone').value;
             const apt = document.getElementById('editApt').value;
-            const image = document.getElementById('editImage').value;
-            
+
+            // Validate form fields
+            let isValid = true;
+
+            // Last name is required
+            if (!last) {
+                showValidationError('editLast', 'Last name is required');
+                isValid = false;
+            }
+
+            // Validate email if provided
+            if (email && !validateEmail(email)) {
+                showValidationError('editEmail', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            // Validate phone if provided
+            if (phone && !validatePhone(phone)) {
+                showValidationError('editPhone', 'Please enter a valid phone number in format (123) 456-7890');
+                isValid = false;
+            }
+
+            // Validate apartment if provided
+            if (apt && !validateApartment(apt)) {
+                showValidationError('editApt', 'Apartment must be 4 characters: first character L, K, or S, followed by 3 digits (101-799)');
+                isValid = false;
+            }
+
+            // If validation fails, stop here
+            if (!isValid) {
+                return;
+            }
+
             fetch('/api/person/update', {
                 method: 'PUT',
                 headers: {
@@ -247,8 +366,7 @@
                     last: last,
                     email: email,
                     phone: phone,
-                    apt: apt,
-                    image: image
+                    apt: apt
                 }),
             })
             .then(response => response.json())
