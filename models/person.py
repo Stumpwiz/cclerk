@@ -5,7 +5,7 @@ from extensions import db
 class Person(db.Model):
     __tablename__ = 'person'
 
-    person_id = db.Column('personid', db.BigInteger, primary_key=True, autoincrement=True)
+    person_id = db.Column('personid', db.Integer, primary_key=True, autoincrement=True)
     first = db.Column(db.String(15), nullable=True, default=None)
     last = db.Column(db.String(30), nullable=True, default=None)
     email = db.Column(db.String(45), nullable=True, default=None)

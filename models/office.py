@@ -6,7 +6,7 @@ from models.body import Body
 class Office(db.Model):
     __tablename__ = 'office'
 
-    office_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    office_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(45), nullable=True, default=None)
     office_precedence = db.Column(db.Float, nullable=True, default=None)
     office_body_id = db.Column(db.BigInteger, db.ForeignKey('body.body_id'), nullable=False)

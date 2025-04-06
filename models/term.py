@@ -9,8 +9,8 @@ class Term(db.Model):
     __tablename__ = 'term'
 
     # Composite primary key
-    term_person_id = db.Column('termpersonid', db.BigInteger, db.ForeignKey('person.personid'), primary_key=True)
-    term_office_id = db.Column('termofficeid', db.BigInteger, db.ForeignKey('office.office_id'), primary_key=True)
+    term_person_id = db.Column('termpersonid', db.Integer, db.ForeignKey('person.personid'), primary_key=True)
+    term_office_id = db.Column('termofficeid', db.Integer, db.ForeignKey('office.office_id'), primary_key=True)
     
     # Other fields
     start = db.Column(db.Date, nullable=True, default=None)
