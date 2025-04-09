@@ -127,6 +127,7 @@
                 // Focus on the first name field
                 document.getElementById('first').focus();
             });
+
         });
 
         // Function to fetch all persons from the API
@@ -301,14 +302,42 @@
                     apt: apt
                 }),
             })
-            .then(response => response.json())
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json().then(data => {
+                        if (!response.ok) {
+                            throw new Error(data.error || 'An error occurred');
+                        }
+                        return data;
+                    });
+                }
+                throw new Error('Unexpected response format');
+            })
             .then(data => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createPersonModal'));
                 modal.hide();
                 document.getElementById('createPersonForm').reset();
                 fetchPersons();
             })
-            .catch(error => console.error('Error creating person:', error));
+            .catch(error => {
+                // Display error message in the modal
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = error.message;
+
+                // Remove any existing error messages
+                const existingError = document.querySelector('#createPersonModal .alert');
+                if (existingError) {
+                    existingError.remove();
+                }
+
+                // Insert the error message at the top of the form
+                const form = document.getElementById('createPersonForm');
+                form.parentNode.insertBefore(errorDiv, form);
+
+                console.error('Error creating person:', error);
+            });
         });
 
         // Update an existing person
@@ -369,13 +398,41 @@
                     apt: apt
                 }),
             })
-            .then(response => response.json())
+            .then(response => {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json().then(data => {
+                        if (!response.ok) {
+                            throw new Error(data.error || 'An error occurred');
+                        }
+                        return data;
+                    });
+                }
+                throw new Error('Unexpected response format');
+            })
             .then(data => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editPersonModal'));
                 modal.hide();
                 fetchPersons();
             })
-            .catch(error => console.error('Error updating person:', error));
+            .catch(error => {
+                // Display error message in the modal
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger';
+                errorDiv.textContent = error.message;
+
+                // Remove any existing error messages
+                const existingError = document.querySelector('#editPersonModal .alert');
+                if (existingError) {
+                    existingError.remove();
+                }
+
+                // Insert the error message at the top of the form
+                const form = document.getElementById('editPersonForm');
+                form.parentNode.insertBefore(errorDiv, form);
+
+                console.error('Error updating person:', error);
+            });
         });
 
         // Delete a person

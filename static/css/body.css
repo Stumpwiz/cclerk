@@ -1,0 +1,115 @@
+/* Body section styling */
+
+/* Improve table readability */
+.body-table {
+    width: 100%;
+    table-layout: fixed; /* Fixed table layout for better control */
+}
+
+.body-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.body-table td {
+    vertical-align: middle;
+    word-wrap: break-word; /* Allow text to wrap */
+}
+
+/* Set column widths */
+.body-table th:nth-child(1) { width: 20%; } /* Name */
+.body-table th:nth-child(2) { width: 35%; } /* Mission */
+.body-table th:nth-child(3) { width: 15%; } /* Image */
+.body-table th:nth-child(4) { width: 10%; } /* Precedence */
+.body-table th:nth-child(5) { width: 20%; } /* Actions */
+
+/* Truncate long mission text with ellipsis */
+.mission-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Show full text on hover */
+.mission-cell:hover {
+    white-space: normal;
+    overflow: visible;
+    max-width: none;
+    position: relative;
+    z-index: 1;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* Style action buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    min-width: 120px; /* Ensure enough space for buttons */
+}
+
+/* Make body rows clickable */
+.body-row {
+    cursor: pointer;
+}
+
+/* Add subtle hover effect to table rows */
+.body-table tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+}
+
+/* Style the selected row */
+.body-table tbody tr.table-primary {
+    background-color: rgba(0,123,255,0.15);
+}
+
+/* Style the create button */
+.create-body-btn {
+    margin-right: 1rem;
+}
+
+/* Style the image display container */
+.image-display-container {
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    background-color: #fff;
+    max-width: 200px;
+}
+
+/* Style the image display */
+#selectedBodyImage {
+    max-height: 100px;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mission-cell {
+        max-width: 150px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    /* Adjust layout for small screens */
+    .d-flex.justify-content-between.align-items-start {
+        flex-direction: column;
+    }
+
+    .image-display-container {
+        margin-top: 1rem;
+        max-width: 150px;
+    }
+
+    #selectedBodyImage {
+        max-height: 80px;
+    }
+}

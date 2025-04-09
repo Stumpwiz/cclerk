@@ -4,6 +4,25 @@
     <div class="container">
         <h2 class="mb-4">Letter Template Management</h2>
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Focus on the recipient field when the page loads
+                document.getElementById('recipient').focus();
+
+                // Add event listener for when the edit template modal is shown
+                document.getElementById('editTemplateModal').addEventListener('shown.bs.modal', function () {
+                    // Focus on the header field
+                    document.getElementById('header').focus();
+                });
+
+                // Add event listener for when the create template modal is shown
+                document.getElementById('createTemplateModal').addEventListener('shown.bs.modal', function () {
+                    // Focus on the new header field
+                    document.getElementById('new_header').focus();
+                });
+            });
+        </script>
+
         <div class="row mb-4">
             <!-- User Input Div (First) -->
             <div class="col-md-6">
@@ -45,7 +64,8 @@
                                 <div class="pdf-list-container border rounded" style="height: 200px; overflow-y: auto;">
                                     <div class="list-group list-group-flush">
                                         {% for pdf in pdf_files %}
-                                            <button type="button" class="list-group-item list-group-item-action pdf-item {% if pdf == most_recent_pdf %}active{% endif %}" 
+                                            <button type="button"
+                                                    class="list-group-item list-group-item-action pdf-item"
                                                     data-pdf="{{ pdf }}" onclick="selectPdf(this)">
                                                 {{ pdf }}
                                             </button>
@@ -70,27 +90,26 @@
 
                                 function updatePdfSelection(pdfFile) {
                                     document.getElementById('view_pdf_file').value = pdfFile;
-                                    document.getElementById('print_pdf_file').value = pdfFile;
                                     document.getElementById('delete_pdf_file').value = pdfFile;
                                 }
                             </script>
                             <div class="d-flex justify-content-between mt-auto">
                                 <form method="POST" action="{{ url_for('letters.view_pdf') }}" class="me-2">
-                                    <input type="hidden" id="view_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
+                                    <input type="hidden" id="view_pdf_file" name="pdf_file"
+                                           value="">
                                     <button type="submit" class="btn btn-primary">View</button>
                                 </form>
-                                <form method="POST" action="{{ url_for('letters.print_pdf') }}" class="me-2">
-                                    <input type="hidden" id="print_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
-                                    <button type="submit" class="btn btn-info">Print</button>
-                                </form>
                                 <form method="POST" action="{{ url_for('letters.delete_pdf') }}">
-                                    <input type="hidden" id="delete_pdf_file" name="pdf_file" value="{{ most_recent_pdf }}">
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this PDF?')">Delete</button>
+                                    <input type="hidden" id="delete_pdf_file" name="pdf_file"
+                                           value="">
+                                    <button type="submit" class="btn btn-danger"
+                                            onclick="return confirm('Are you sure you want to delete this PDF?')">Delete
+                                    </button>
                                 </form>
                             </div>
                         {% else %}
                             <div class="alert alert-info">
-                                No PDF files found in the latex_compile directory.
+                                No PDF files found in the files_letters directory.
                             </div>
                         {% endif %}
                     </div>

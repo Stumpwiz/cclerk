@@ -2,25 +2,29 @@
 {% block title %}Office (Precedence){% endblock %}
 
 {% block styles %}
-<style>
-    .body-item {
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .body-item:hover {
-        background-color: #f8f9fa;
-    }
-    .body-item.active {
-        background-color: #0d6efd;
-        color: white;
-    }
-    .office-actions {
-        visibility: hidden;
-    }
-    .list-group-item:hover .office-actions {
-        visibility: visible;
-    }
-</style>
+    <style>
+        .body-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .body-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .body-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .office-actions {
+            visibility: hidden;
+        }
+
+        .list-group-item:hover .office-actions {
+            visibility: visible;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -66,7 +70,8 @@
     </div>
 
     <!-- Create Office Modal -->
-    <div class="modal fade" id="createOfficeModal" tabindex="-1" aria-labelledby="createOfficeModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createOfficeModal" tabindex="-1" aria-labelledby="createOfficeModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -82,7 +87,8 @@
                         <input type="hidden" id="bodyId" name="bodyId">
                         <div class="mb-3">
                             <label for="precedence" class="form-label">Precedence</label>
-                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1" value="0">
+                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1"
+                                   value="0">
                         </div>
                     </form>
                 </div>
@@ -95,7 +101,8 @@
     </div>
 
     <!-- Edit Office Modal -->
-    <div class="modal fade" id="editOfficeModal" tabindex="-1" aria-labelledby="editOfficeModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editOfficeModal" tabindex="-1" aria-labelledby="editOfficeModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -135,7 +142,7 @@
         let selectedBodyId = null;
 
         // Fetch and display all bodies when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             fetchBodies();
         });
 
@@ -161,7 +168,7 @@
                         listItem.className = 'list-group-item body-item';
                         listItem.textContent = body.name;
                         listItem.dataset.id = body.id;
-                        listItem.addEventListener('click', function() {
+                        listItem.addEventListener('click', function () {
                             selectBody(body.id, body.name);
                         });
                         bodiesList.appendChild(listItem);
@@ -241,7 +248,7 @@
                             const editBtn = document.createElement('button');
                             editBtn.className = 'btn btn-sm btn-primary me-2';
                             editBtn.textContent = 'Edit';
-                            editBtn.addEventListener('click', function(e) {
+                            editBtn.addEventListener('click', function (e) {
                                 e.stopPropagation(); // Prevent event bubbling
                                 openEditModal(office.id);
                             });
@@ -250,7 +257,7 @@
                             const deleteBtn = document.createElement('button');
                             deleteBtn.className = 'btn btn-sm btn-danger';
                             deleteBtn.textContent = 'Delete';
-                            deleteBtn.addEventListener('click', function(e) {
+                            deleteBtn.addEventListener('click', function (e) {
                                 e.stopPropagation(); // Prevent event bubbling
                                 deleteOffice(office.id);
                             });
@@ -281,17 +288,24 @@
         }
 
         // Show the create modal when the create button is clicked
-        document.getElementById('showCreateModalBtn').addEventListener('click', function() {
+        document.getElementById('showCreateModalBtn').addEventListener('click', function () {
             // Set the body ID in the create form
             document.getElementById('bodyId').value = selectedBodyId;
 
             // Show the create modal
-            const createModal = new bootstrap.Modal(document.getElementById('createOfficeModal'));
+            const createModalElement = document.getElementById('createOfficeModal');
+            const createModal = new bootstrap.Modal(createModalElement);
+
+            // Add event listener to set focus on title input when modal is shown
+            createModalElement.addEventListener('shown.bs.modal', function () {
+                document.getElementById('title').focus();
+            }, {once: true}); // Use once: true to ensure the event listener is removed after it's triggered
+
             createModal.show();
         });
 
-        // Handle create form submission
-        document.getElementById('submitCreateOfficeBtn').addEventListener('click', function() {
+        // Function to handle office creation
+        function createOffice() {
             const title = document.getElementById('title').value;
             const bodyId = document.getElementById('bodyId').value || selectedBodyId;
             const precedence = document.getElementById('precedence').value;
@@ -307,20 +321,24 @@
                     precedence: parseFloat(precedence)
                 }),
             })
-            .then(response => response.json())
-            .then(data => {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficeModal'));
-                modal.hide();
-                document.getElementById('createOfficeForm').reset();
+                .then(response => response.json())
+                .then(data => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficeModal'));
+                    modal.hide();
+                    document.getElementById('createOfficeForm').reset();
 
-                // Refresh the offices list for the selected body
-                fetchOfficesForBody(selectedBodyId);
-            })
-            .catch(error => console.error('Error creating office:', error));
-        });
+                    // Refresh the offices list for the selected body
+                    fetchOfficesForBody(selectedBodyId);
+                })
+                .catch(error => console.error('Error creating office:', error));
+        }
+
+        // Handle create form submission via button click
+        document.getElementById('submitCreateOfficeBtn').addEventListener('click', createOffice);
+
 
         // Update an existing office
-        document.getElementById('updateOfficeBtn').addEventListener('click', function() {
+        document.getElementById('updateOfficeBtn').addEventListener('click', function () {
             const officeId = document.getElementById('editOfficeId').value;
             const title = document.getElementById('editTitle').value;
             const bodyId = document.getElementById('editBodyId').value;
@@ -338,15 +356,15 @@
                     precedence: parseFloat(precedence)
                 }),
             })
-            .then(response => response.json())
-            .then(data => {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
-                modal.hide();
+                .then(response => response.json())
+                .then(data => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
+                    modal.hide();
 
-                // Refresh the offices list for the selected body
-                fetchOfficesForBody(selectedBodyId);
-            })
-            .catch(error => console.error('Error updating office:', error));
+                    // Refresh the offices list for the selected body
+                    fetchOfficesForBody(selectedBodyId);
+                })
+                .catch(error => console.error('Error updating office:', error));
         });
 
         // Delete an office
@@ -355,12 +373,12 @@
                 fetch(`/api/office/delete?id=${officeId}`, {
                     method: 'DELETE',
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Refresh the offices list for the selected body
-                    fetchOfficesForBody(selectedBodyId);
-                })
-                .catch(error => console.error('Error deleting office:', error));
+                    .then(response => response.json())
+                    .then(data => {
+                        // Refresh the offices list for the selected body
+                        fetchOfficesForBody(selectedBodyId);
+                    })
+                    .catch(error => console.error('Error deleting office:', error));
             }
         }
     </script>

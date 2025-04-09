@@ -1,5 +1,5 @@
 # MRRA Residents Council Clerk
-This project supports clerical tasks assigned to the secretary and administrative assistant of the 
+This project supports clerical tasks assigned to the administrative assistant of the 
 [Mercy Ridge Residents Council](https://mrra.online/).
 
 ![Build Status](https://img.shields.io/badge/status-passing%20%7C%20WIP-yellow)
@@ -17,9 +17,9 @@ A detailed explanation of the project, including its purpose and functionality.
 - [License](#license)
 
 ## Features
-- Feature 1
-- Feature 2
-- Feature 3
+- Welcome Letters Generation and Management
+- Management of the Database That Supports Committee Rosters
+- Generation of Rosters, Vacancy Report, and Expiring Terms Report
 
 ## Getting Started
 Instructions to get started with the application.

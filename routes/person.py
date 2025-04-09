@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template
 from models.person import Person
 from extensions import db
+from sqlalchemy.exc import IntegrityError
 
 # Define a blueprint for the "person" feature
 person_bp = Blueprint('person', __name__)
@@ -24,7 +25,7 @@ def get_persons():
             })
         return jsonify({"error": "Person not found"}), 404
 
-    persons = Person.query.order_by(Person.last, Person.first).all()
+    persons = Person.query.order_by(Person.first, Person.last).all()
     return jsonify([{
         "id": person.person_id,
         "first": person.first,
@@ -52,16 +53,21 @@ def create_person():
     )
 
     db.session.add(new_person)
-    db.session.commit()
-
-    return jsonify({
-        "id": new_person.person_id,
-        "first": new_person.first,
-        "last": new_person.last,
-        "email": new_person.email,
-        "phone": new_person.phone,
-        "apt": new_person.apt
-    }), 201
+    try:
+        db.session.commit()
+        return jsonify({
+            "id": new_person.person_id,
+            "first": new_person.first,
+            "last": new_person.last,
+            "email": new_person.email,
+            "phone": new_person.phone,
+            "apt": new_person.apt
+        }), 201
+    except IntegrityError as e:
+        db.session.rollback()
+        if 'uix_person_first_last' in str(e):
+            return jsonify({"error": "A person with this first and last name already exists"}), 400
+        return jsonify({"error": "An error occurred while creating the person"}), 400
 
 
 @person_bp.route('/update', methods=['PUT'])
@@ -87,16 +93,21 @@ def update_person():
     if 'apt' in data:
         person.apt = data['apt']
 
-    db.session.commit()
-
-    return jsonify({
-        "id": person.person_id,
-        "first": person.first,
-        "last": person.last,
-        "email": person.email,
-        "phone": person.phone,
-        "apt": person.apt
-    })
+    try:
+        db.session.commit()
+        return jsonify({
+            "id": person.person_id,
+            "first": person.first,
+            "last": person.last,
+            "email": person.email,
+            "phone": person.phone,
+            "apt": person.apt
+        })
+    except IntegrityError as e:
+        db.session.rollback()
+        if 'uix_person_first_last' in str(e):
+            return jsonify({"error": "A person with this first and last name already exists"}), 400
+        return jsonify({"error": "An error occurred while updating the person"}), 400
 
 
 @person_bp.route('/delete', methods=['DELETE'])

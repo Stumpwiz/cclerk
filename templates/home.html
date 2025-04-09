@@ -1,7 +1,393 @@
 {% extends 'base.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<h2>Welcome to Clerk App</h2>
-<p>This is a secured page only accessible to logged-in users.</p>
-<a class="btn btn-primary" href="{{ url_for('main.index') }}">Go to home</a>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Find all buttons
+            const buttons = document.querySelectorAll('button.btn-primary');
+
+            // Find the backup button by its text content
+            let backupButton = null;
+            buttons.forEach(function (button) {
+                if (button.textContent.trim() === 'Backup') {
+                    backupButton = button;
+                }
+            });
+
+            // Add click event listener to the backup button
+            if (backupButton) {
+                backupButton.addEventListener('click', function () {
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    this.innerHTML = 'Backing up...';
+
+                    // Make AJAX request to backup endpoint
+                    fetch('/backup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = 'Backup';
+
+                            if (data.success) {
+                                // Add the new backup file to the list
+                                const filesList = document.getElementById('backupFilesList');
+                                const fileItem = document.createElement('a');
+                                fileItem.href = '#';
+                                fileItem.className = 'list-group-item list-group-item-action';
+                                fileItem.textContent = data.filename;
+                                filesList.appendChild(fileItem);
+
+                                // Show success message
+                                alert('Backup created successfully: ' + data.filename);
+                            } else {
+                                // Show error message
+                                alert('Backup failed: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = 'Backup';
+
+                            // Show error message
+                            alert('Backup failed: ' + error);
+                        });
+                });
+            }
+
+            // Find the view button in the Backup/Restore column
+            let viewBackupButton = null;
+            const backupSection = document.querySelector('.col-md-6:nth-child(2)'); // Right column (Backup/Restore)
+            if (backupSection) {
+                const viewButtons = backupSection.querySelectorAll('button.btn-primary');
+                viewButtons.forEach(function (button) {
+                    if (button.textContent.trim() === 'View') {
+                        viewBackupButton = button;
+                    }
+                });
+            }
+
+            // Add click event listener to the view button
+            if (viewBackupButton) {
+                viewBackupButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('backupFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    if (!selectedFile) {
+                        alert('Please select a file to view');
+                        return;
+                    }
+
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    const originalText = this.innerHTML;
+                    this.innerHTML = 'Opening...';
+
+                    // Make AJAX request to view_file endpoint
+                    fetch('/view_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: selectedFile.textContent
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            if (!data.success) {
+                                // Show error message
+                                alert('Failed to open file: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            // Show error message
+                            alert('Failed to open file: ' + error);
+                        });
+                });
+            }
+
+            // Define the reportsSection variable for use later
+            const reportsSection = document.querySelector('.col-md-6:nth-child(1)'); // Left column (Generate Reports)
+
+            // Make backup files list items selectable
+            const backupFileItems = document.querySelectorAll('#backupFilesList a');
+            backupFileItems.forEach(function (item) {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    // Remove active class from all items
+                    backupFileItems.forEach(function (i) {
+                        i.classList.remove('active');
+                    });
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                });
+            });
+
+            // Find the delete button in the Generate Reports column
+            let deleteReportsButton = null;
+            if (reportsSection) {
+                const deleteButtons = reportsSection.querySelectorAll('button.btn-danger');
+                deleteButtons.forEach(function (button) {
+                    if (button.textContent.trim() === 'Delete') {
+                        deleteReportsButton = button;
+                    }
+                });
+            }
+
+            // Add click event listener to the delete button in Generate Reports column
+            if (deleteReportsButton) {
+                deleteReportsButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('pdfFilesList');
+                    let selectedFile = filesList.querySelector('.active');
+
+                    // If no file is selected, select the first one
+                    if (!selectedFile && filesList.children.length > 0) {
+                        selectedFile = filesList.children[0];
+                        selectedFile.classList.add('active');
+                    }
+
+                    if (!selectedFile) {
+                        alert('Please select a file to delete');
+                        return;
+                    }
+
+                    // Confirm deletion
+                    if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+                        return;
+                    }
+
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    const originalText = this.innerHTML;
+                    this.innerHTML = 'Deleting...';
+
+                    // Make AJAX request to delete_file endpoint
+                    fetch('/delete_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: selectedFile.textContent
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            if (data.success) {
+                                // Remove the file from the list
+                                selectedFile.remove();
+
+                                // Select the first item if available
+                                if (filesList.children.length > 0) {
+                                    filesList.children[0].classList.add('active');
+                                }
+
+                            } else {
+                                // Show error message
+                                alert('Failed to delete file: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            // Show error message
+                            alert('Failed to delete file: ' + error);
+                        });
+                });
+            }
+
+            // Find the delete button in the Backup/Restore column
+            let deleteBackupButton = null;
+            const backupSection = document.querySelector('.col-md-6:nth-child(2)'); // Right column (Backup/Restore)
+            if (backupSection) {
+                const deleteButtons = backupSection.querySelectorAll('button.btn-danger');
+                deleteButtons.forEach(function (button) {
+                    if (button.textContent.trim() === 'Delete') {
+                        deleteBackupButton = button;
+                    }
+                });
+            }
+
+            // Add click event listener to the delete button in Backup/Restore column
+            if (deleteBackupButton) {
+                deleteBackupButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('backupFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    if (!selectedFile) {
+                        alert('Please select a file to delete');
+                        return;
+                    }
+
+                    // Show dummy dialog
+                    alert('The file "' + selectedFile.textContent.trim() + '" has been set up for deletion.');
+                });
+            }
+
+            // Make PDF files list items selectable
+            const pdfFileItems = document.querySelectorAll('#pdfFilesList a');
+
+            // Select the first item by default if there are any items
+            if (pdfFileItems.length > 0) {
+                pdfFileItems[0].classList.add('active');
+                // Update hidden input field for View form with the first PDF file
+                document.getElementById('view_pdf_file').value = pdfFileItems[0].textContent.trim();
+            }
+
+            pdfFileItems.forEach(function (item) {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    // Remove active class from all items
+                    pdfFileItems.forEach(function (i) {
+                        i.classList.remove('active');
+                    });
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    // Update hidden input field for View form
+                    document.getElementById('view_pdf_file').value = this.textContent.trim();
+                });
+            });
+        });
+    </script>
+    <style>
+        .full-height-container {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 150px); /* Adjust based on navbar and other elements */
+        }
+        .full-height-row {
+            flex: 1;
+        }
+        .full-height-card {
+            height: 100%;
+        }
+    </style>
+    <div class="container full-height-container">
+        <div class="row full-height-row">
+            <!-- Left Column - Generate Reports -->
+            <div class="col-md-6">
+                <div class="card mb-4 full-height-card">
+                    <div class="card-header">
+                        <h3>Generate Reports</h3>
+                    </div>
+                    <div class="card-body" style="min-height: 300px;">
+                        <div class="row h-100">
+                            <!-- Left Column - Buttons -->
+                            <div class="col-md-6">
+                                <div class="d-flex flex-column justify-content-start h-100">
+                                    <button type="button" class="btn btn-primary mb-3">Long Form Roster</button>
+                                    <button type="button" class="btn btn-primary mb-3">Short Form Roster</button>
+                                    <button type="button" class="btn btn-primary mb-3">Vacancies</button>
+                                    <button type="button" class="btn btn-primary mb-3">Expiring Terms</button>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Display Window -->
+                            <div class="col-md-6 h-100">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5>Generated Files</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="pdfFilesList" class="list-group mb-3">
+                                            <!-- PDF files will be displayed here -->
+                                            {% for file in pdf_files %}
+                                                <a href="#"
+                                                   class="list-group-item list-group-item-action">{{ file }}</a>
+                                            {% endfor %}
+                                        </div>
+                                        <!-- Action Buttons -->
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <form method="POST" action="{{ url_for('main.view_pdf') }}">
+                                                    <input type="hidden" id="view_pdf_file" name="pdf_file" value="">
+                                                    <button type="submit" class="btn btn-sm btn-primary w-100">View</button>
+                                                </form>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" class="btn btn-sm btn-danger w-100">Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Backup/Restore -->
+            <div class="col-md-6">
+                <div class="card mb-4 full-height-card">
+                    <div class="card-header">
+                        <h3>Backup/Restore</h3>
+                    </div>
+                    <div class="card-body" style="min-height: 300px;">
+                        <div class="row h-100">
+                            <!-- Left Column - Buttons -->
+                            <div class="col-md-6">
+                                <div class="d-flex flex-column justify-content-start h-100">
+                                    <button type="button" class="btn btn-primary mb-3">Backup</button>
+                                    <button type="button" class="btn btn-primary mb-3">Restore</button>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Display Window -->
+                            <div class="col-md-6 h-100">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h5>Generated Files</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="backupFilesList" class="list-group mb-3">
+                                            <!-- Files will be displayed here -->
+                                            {% for file in backup_files %}
+                                                <a href="#"
+                                                   class="list-group-item list-group-item-action">{{ file }}</a>
+                                            {% endfor %}
+                                        </div>
+                                        <!-- Action Buttons -->
+                                        <div class="row">
+                                            <div class="col-6 mb-2">
+                                                <button type="button" class="btn btn-sm btn-primary w-100">View</button>
+                                            </div>
+                                            <div class="col-6">
+                                                <button type="button" class="btn btn-sm btn-danger w-100">Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

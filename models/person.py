@@ -5,6 +5,9 @@ from extensions import db
 
 class Person(db.Model):
     __tablename__ = 'person'
+    __table_args__ = (
+        db.UniqueConstraint('first', 'last', name='uix_person_first_last'),
+    )
 
     person_id = db.Column('personid', db.Integer, primary_key=True, autoincrement=True)
     first = db.Column(db.String(15), nullable=True, default=None)

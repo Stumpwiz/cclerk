@@ -63,27 +63,18 @@ def get_letters_html():
     # Get the letter template from the database
     template = LetterTemplate.get_singleton()
 
-    # Get list of PDF files in the latex_compile directory
-    latex_compile_dir = os.path.join(current_app.instance_path, "latex_compile")
+    # Get list of PDF files in the files_letters directory
+    files_letters_dir = os.path.join(current_app.root_path, "files_letters")
     pdf_files = []
-    most_recent_pdf = None
-    most_recent_time = 0
 
-    if os.path.exists(latex_compile_dir):
+    if os.path.exists(files_letters_dir):
         # Get all PDF files and sort them alphabetically
-        pdf_files = [f for f in os.listdir(latex_compile_dir) if f.endswith('.pdf')]
+        pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
         pdf_files.sort()
 
-        # Find the most recently modified PDF file
-        for pdf_file in pdf_files:
-            file_path = os.path.join(latex_compile_dir, pdf_file)
-            mod_time = os.path.getmtime(file_path)
-            if mod_time > most_recent_time:
-                most_recent_time = mod_time
-                most_recent_pdf = pdf_file
-
     # Render the template with the letter template data and PDF files
-    return render_template("letters.html", template=template, pdf_files=pdf_files, most_recent_pdf=most_recent_pdf)
+    # No most_recent_pdf is passed to ensure no file is selected by default
+    return render_template("letters.html", template=template, pdf_files=pdf_files)
 
 
 @letters_bp.route('/update_template', methods=['POST'])
@@ -104,7 +95,7 @@ def update_template():
     else:
         flash('No template found to update.', 'danger')
 
-    return redirect(url_for('letters.get_letters'))
+    return redirect(url_for('letters.get_letters_html'))
 
 
 @letters_bp.route('/create_template', methods=['POST'])
@@ -112,7 +103,7 @@ def create_template():
     # Check if a template already exists
     if not LetterTemplate.can_add_record():
         flash('A template already exists. Please use the edit function instead.', 'warning')
-        return redirect(url_for('letters.get_letters'))
+        return redirect(url_for('letters.get_letters_html'))
 
     # Get the form data
     header = request.form.get('header')
@@ -124,7 +115,7 @@ def create_template():
     db.session.commit()
 
     flash('Template created successfully!', 'success')
-    return redirect(url_for('letters.get_letters'))
+    return redirect(url_for('letters.get_letters_html'))
 
 
 @letters_bp.route('/view_pdf', methods=['POST'])
@@ -137,8 +128,8 @@ def view_pdf():
         flash('No PDF file selected.', 'danger')
         return redirect(url_for('letters.get_letters_html'))
 
-    latex_compile_dir = os.path.join(current_app.instance_path, "latex_compile")
-    pdf_path = os.path.join(latex_compile_dir, pdf_file)
+    files_letters_dir = os.path.join(current_app.root_path, "files_letters")
+    pdf_path = os.path.join(files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -154,32 +145,6 @@ def view_pdf():
 
     return redirect(url_for('letters.get_letters_html'))
 
-@letters_bp.route('/print_pdf', methods=['POST'])
-def print_pdf():
-    """
-    Print the selected PDF file using the OS print dialog.
-    """
-    pdf_file = request.form.get('pdf_file')
-    if not pdf_file:
-        flash('No PDF file selected.', 'danger')
-        return redirect(url_for('letters.get_letters_html'))
-
-    latex_compile_dir = os.path.join(current_app.instance_path, "latex_compile")
-    pdf_path = os.path.join(latex_compile_dir, pdf_file)
-
-    if not os.path.exists(pdf_path):
-        flash(f'PDF file {pdf_file} not found.', 'danger')
-        return redirect(url_for('letters.get_letters_html'))
-
-    # Print the PDF using the default printer
-    try:
-        # On Windows, we can use the default print command
-        os.startfile(pdf_path, "print")
-        flash(f'Printing {pdf_file}.', 'success')
-    except Exception as e:
-        flash(f'Error printing PDF: {e}', 'danger')
-
-    return redirect(url_for('letters.get_letters_html'))
 
 @letters_bp.route('/delete_pdf', methods=['POST'])
 def delete_pdf():
@@ -191,8 +156,8 @@ def delete_pdf():
         flash('No PDF file selected.', 'danger')
         return redirect(url_for('letters.get_letters_html'))
 
-    latex_compile_dir = os.path.join(current_app.instance_path, "latex_compile")
-    pdf_path = os.path.join(latex_compile_dir, pdf_file)
+    files_letters_dir = os.path.join(current_app.root_path, "files_letters")
+    pdf_path = os.path.join(files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -207,6 +172,7 @@ def delete_pdf():
 
     return redirect(url_for('letters.get_letters_html'))
 
+
 @letters_bp.route('/generate_letter', methods=['POST'])
 def generate_letter():
     # Get the form data
@@ -219,7 +185,7 @@ def generate_letter():
 
     if not template:
         flash('No template found. Please create a template first.', 'danger')
-        return redirect(url_for('letters.get_letters'))
+        return redirect(url_for('letters.get_letters_html'))
 
     # Extract the last name from the recipient field (last word)
     last_name = recipient.split()[-1]
@@ -241,35 +207,24 @@ def generate_letter():
     # Combine the header, commands, and body into a complete LaTeX document
     tex_content = f"{header_safe}\n{recipient_command}\n{salutation_command}\n{apartment_command}\n{body_safe}"
 
-    # Ensure the pdfs directory exists in the instance folder
-    pdfs_dir = os.path.join(current_app.instance_path, "pdfs")
-    try:
-        os.makedirs(pdfs_dir, exist_ok=True)
-    except Exception as dir_error:
-        print(f"Error creating PDF directory: {dir_error}")
-        # Try an alternative location if the instance directory is not accessible
-        pdfs_dir = os.path.join(tempfile.gettempdir(), "cclerk_pdfs")
-        os.makedirs(pdfs_dir, exist_ok=True)
-        print(f"Using alternative PDF directory: {pdfs_dir}")
+    # Use the dedicated files_letters directory
+    # This avoids creating and cleaning up temporary directories for each letter generation
+    files_letters_dir = os.path.join(current_app.root_path, "files_letters")
+    if not os.path.exists(files_letters_dir):
+        os.makedirs(files_letters_dir, exist_ok=True)
+        print(f"Created files_letters directory: {files_letters_dir}")
 
     # Path to the final PDF file
-    final_pdf_path = os.path.join(pdfs_dir, f"{last_name}.pdf")
-
-    # Use the dedicated latex_compile directory in the instance folder
-    # This avoids creating and cleaning up temporary directories for each letter generation
-    latex_compile_dir = os.path.join(current_app.instance_path, "latex_compile")
-    if not os.path.exists(latex_compile_dir):
-        os.makedirs(latex_compile_dir, exist_ok=True)
-        print(f"Created LaTeX compilation directory: {latex_compile_dir}")
+    final_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
 
     try:
         # Create the .tex file
-        tex_file_path = os.path.join(latex_compile_dir, f"{last_name}.tex")
+        tex_file_path = os.path.join(files_letters_dir, f"{last_name}.tex")
         with open(tex_file_path, 'w', encoding='utf-8') as tex_file:
             tex_file.write(tex_content)
 
         # Path to the output PDF file
-        temp_pdf_path = os.path.join(latex_compile_dir, f"{last_name}.pdf")
+        temp_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
 
         try:
             # Run xelatex to generate the PDF
@@ -279,8 +234,8 @@ def generate_letter():
             print(f"Running first xelatex pass...")
             try:
                 result1 = subprocess.run(
-                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", latex_compile_dir, tex_file_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=latex_compile_dir)
+                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
                 print(f"First xelatex run completed successfully.")
             except subprocess.CalledProcessError as e:
                 print(f"First xelatex run failed with return code: {e.returncode}")
@@ -297,8 +252,8 @@ def generate_letter():
             print(f"Running second xelatex pass...")
             try:
                 result2 = subprocess.run(
-                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", latex_compile_dir, tex_file_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=latex_compile_dir)
+                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
                 print(f"Second xelatex run completed successfully.")
             except subprocess.CalledProcessError as e:
                 print(f"Second xelatex run failed with return code: {e.returncode}")
@@ -316,19 +271,19 @@ def generate_letter():
                 print(f"PDF file generated successfully.")
             else:
                 print(f"Expected PDF file not found. Looking for alternatives...")
-                # If not found, look for any PDF file in the latex_compile directory
-                pdf_files = [f for f in os.listdir(latex_compile_dir) if f.endswith('.pdf')]
+                # If not found, look for any PDF file in the files_letters directory
+                pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
                 if pdf_files:
                     # Use the first PDF file found
-                    temp_pdf_path = os.path.join(latex_compile_dir, pdf_files[0])
+                    temp_pdf_path = os.path.join(files_letters_dir, pdf_files[0])
                     print(f"Using alternative PDF file: {os.path.basename(temp_pdf_path)}")
                 else:
-                    print("No PDF files found in the LaTeX compilation directory")
+                    print("No PDF files found in the files_letters directory")
 
                     # Check for log files that might contain error information
-                    log_files = [f for f in os.listdir(latex_compile_dir) if f.endswith('.log')]
+                    log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
                     for log_file in log_files:
-                        log_path = os.path.join(latex_compile_dir, log_file)
+                        log_path = os.path.join(files_letters_dir, log_file)
                         try:
                             with open(log_path, 'r', encoding='utf-8', errors='replace') as log:
                                 log_content = log.read()
@@ -346,14 +301,14 @@ def generate_letter():
                         pdflatex_path = r"D:\texlive\texlive\2024\bin\windows\pdflatex.exe"
                         if os.path.exists(pdflatex_path):
                             subprocess.run(
-                                [pdflatex_path, "-interaction=nonstopmode", "-output-directory", latex_compile_dir,
+                                [pdflatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir,
                                  tex_file_path],
-                                check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=latex_compile_dir)
+                                check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
 
                             # Check again for PDF files
-                            pdf_files = [f for f in os.listdir(latex_compile_dir) if f.endswith('.pdf')]
+                            pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
                             if pdf_files:
-                                temp_pdf_path = os.path.join(latex_compile_dir, pdf_files[0])
+                                temp_pdf_path = os.path.join(files_letters_dir, pdf_files[0])
                                 print(f"PDF generated using pdflatex.")
                         else:
                             print(f"pdflatex not found at {pdflatex_path}")
@@ -405,18 +360,23 @@ def generate_letter():
                         print(f"All copy methods failed: {alt_copy_error}")
 
                 # Success message without opening the PDF
-                flash(f'Letter for {recipient} generated successfully! Use the buttons above to view, print, or delete the PDF.', 'success')
+                flash(
+                    f'Letter for {recipient} generated successfully! Use the buttons above to view, print, or delete the PDF.',
+                    'success')
 
                 # Clean up LaTeX auxiliary files as well as the generated .tex file
                 try:
                     print("Cleaning up LaTeX auxiliary files...")
                     # List of LaTeX auxiliary file extensions to delete
-                    aux_extensions = ['.tex', '.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk', '.synctex.gz', '.dvi']
+                    # aux_extensions = ['.tex', '.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
+                    #                   '.synctex.gz', '.dvi']
+                    aux_extensions = ['.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
+                                      '.synctex.gz', '.dvi']
                     base_name = os.path.splitext(os.path.basename(tex_file_path))[0]
 
-                    # Get all files in the latex_compile directory
-                    for file in os.listdir(latex_compile_dir):
-                        file_path = os.path.join(latex_compile_dir, file)
+                    # Get all files in the files_letters directory
+                    for file in os.listdir(files_letters_dir):
+                        file_path = os.path.join(files_letters_dir, file)
                         # Check if the file is a LaTeX auxiliary file
                         if os.path.isfile(file_path) and any(file.endswith(ext) for ext in aux_extensions):
                             try:
@@ -430,9 +390,9 @@ def generate_letter():
                 print("No PDF file found to copy. Checking for error information...")
 
                 # Check for log files that might contain error information
-                log_files = [f for f in os.listdir(latex_compile_dir) if f.endswith('.log')]
+                log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
                 for log_file in log_files:
-                    log_path = os.path.join(latex_compile_dir, log_file)
+                    log_path = os.path.join(files_letters_dir, log_file)
                     try:
                         with open(log_path, 'r', encoding='utf-8', errors='replace') as log:
                             log_content = log.read()
@@ -452,7 +412,7 @@ def generate_letter():
             flash(f'Unexpected error: {e}', 'danger')
     except Exception as e:
         flash(f'Unexpected error: {e}', 'danger')
-        # No need to clean up the latex_compile directory as it's a permanent directory in the instance folder
+        # No need to clean up the files_letters directory as it's a permanent directory
         # The LaTeX files will be overwritten on subsequent letter generations
 
     return redirect(url_for('letters.get_letters_html'))

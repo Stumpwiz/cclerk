@@ -1,5 +1,4 @@
 from .letters import letters_bp
-from .rosters import rosters_bp
 from .users import users_bp
 from .auth_routes import auth_bp
 from .main_routes import main_bp
@@ -12,7 +11,6 @@ from .term import term_bp
 def register_blueprints(app):
     # Register API blueprints with URL prefixes
     app.register_blueprint(letters_bp, url_prefix='/api/letters')
-    app.register_blueprint(rosters_bp, url_prefix='/api/rosters')
     app.register_blueprint(users_bp, url_prefix='/api/users')
     app.register_blueprint(body_bp, url_prefix='/api/body')
     app.register_blueprint(office_bp, url_prefix='/api/office')

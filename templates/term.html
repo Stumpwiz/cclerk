@@ -11,14 +11,21 @@
 
         <!-- Filters -->
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label for="personFilter" class="form-label">Filter by Person:</label>
                 <select class="form-select" id="personFilter">
                     <option value="">All Persons</option>
                     <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label for="bodyFilter" class="form-label">Filter by Body:</label>
+                <select class="form-select" id="bodyFilter">
+                    <option value="">All Bodies</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <div class="col-md-4">
                 <label for="officeFilter" class="form-label">Filter by Office:</label>
                 <select class="form-select" id="officeFilter">
                     <option value="">All Offices</option>
@@ -72,6 +79,13 @@
                             </select>
                         </div>
                         <div class="mb-3">
+                            <label for="bodyId" class="form-label">Body</label>
+                            <select class="form-select" id="bodyId" name="bodyId">
+                                <option value="">Select a Body</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label for="officeId" class="form-label">Office</label>
                             <select class="form-select" id="officeId" name="officeId" required>
                                 <option value="">Select an Office</option>
@@ -88,7 +102,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="ordinal" class="form-label">Ordinal</label>
-                            <input type="text" class="form-control" id="ordinal" name="ordinal" placeholder="e.g., 1st, 2nd">
+                            <select class="form-select" id="ordinal" name="ordinal">
+                                <option value="" selected>None</option>
+                                <option value="First">First</option>
+                                <option value="Second">Second</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -130,7 +148,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="editOrdinal" class="form-label">Ordinal</label>
-                            <input type="text" class="form-control" id="editOrdinal" name="ordinal" placeholder="e.g., 1st, 2nd">
+                            <select class="form-select" id="editOrdinal" name="ordinal">
+                                <option value="">None</option>
+                                <option value="First">First</option>
+                                <option value="Second">Second</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -144,11 +166,19 @@
 
     <!-- JavaScript for API interactions -->
     <script>
-        // Fetch and display all terms, persons, and offices when the page loads
+        // Fetch and display all terms, persons, bodies, and offices when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchPersons();
+            fetchBodies();
             fetchOffices();
-            fetchTerms();
+            // Initial fetch of terms with empty filters
+            fetchTerms('', '', '');
+
+            // Add event listener for when the create term modal is shown
+            document.getElementById('createTermModal').addEventListener('shown.bs.modal', function() {
+                // Focus on the person dropdown
+                document.getElementById('personId').focus();
+            });
         });
 
         // Function to fetch all persons from the API
@@ -183,9 +213,80 @@
                 .catch(error => console.error('Error fetching persons:', error));
         }
 
-        // Function to fetch all offices from the API
-        function fetchOffices() {
-            fetch('/api/office/get')
+        // Function to fetch all bodies from the API
+        function fetchBodies() {
+            fetch('/api/body/get')
+                .then(response => response.json())
+                .then(bodies => {
+                    // Populate body filter dropdown
+                    const bodyFilter = document.getElementById('bodyFilter');
+                    bodyFilter.innerHTML = '<option value="">All Bodies</option>';
+
+                    // Populate body dropdown in create form
+                    const bodyIdSelect = document.getElementById('bodyId');
+                    bodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
+
+                    bodies.forEach(body => {
+                        // Add to filter dropdown
+                        const filterOption = document.createElement('option');
+                        filterOption.value = body.id;
+                        filterOption.textContent = body.name;
+                        bodyFilter.appendChild(filterOption);
+
+                        // Add to create form dropdown
+                        const createOption = document.createElement('option');
+                        createOption.value = body.id;
+                        createOption.textContent = body.name;
+                        bodyIdSelect.appendChild(createOption);
+                    });
+
+                    // Add event listener to body dropdown in create form
+                    document.getElementById('bodyId').addEventListener('change', function() {
+                        const bodyId = this.value;
+                        // Fetch offices for the selected body
+                        if (bodyId) {
+                            fetch(`/api/office/get?body_id=${bodyId}`)
+                                .then(response => response.json())
+                                .then(offices => {
+                                    const officeIdSelect = document.getElementById('officeId');
+                                    officeIdSelect.innerHTML = '<option value="">Select an Office</option>';
+                                    offices.forEach(office => {
+                                        const option = document.createElement('option');
+                                        option.value = office.id;
+                                        option.textContent = `${office.title} (${office.body_name})`;
+                                        officeIdSelect.appendChild(option);
+                                    });
+                                })
+                                .catch(error => console.error('Error fetching offices for body:', error));
+                        } else {
+                            // If no body selected, fetch all offices
+                            fetch('/api/office/get')
+                                .then(response => response.json())
+                                .then(offices => {
+                                    const officeIdSelect = document.getElementById('officeId');
+                                    officeIdSelect.innerHTML = '<option value="">Select an Office</option>';
+                                    offices.forEach(office => {
+                                        const option = document.createElement('option');
+                                        option.value = office.id;
+                                        option.textContent = `${office.title} (${office.body_name})`;
+                                        officeIdSelect.appendChild(option);
+                                    });
+                                })
+                                .catch(error => console.error('Error fetching all offices:', error));
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching bodies:', error));
+        }
+
+        // Function to fetch offices from the API, optionally filtered by body_id
+        function fetchOffices(bodyId = '') {
+            let url = '/api/office/get';
+            if (bodyId) {
+                url += `?body_id=${bodyId}`;
+            }
+
+            fetch(url)
                 .then(response => response.json())
                 .then(offices => {
                     // Populate office filter dropdown
@@ -216,7 +317,7 @@
         }
 
         // Function to fetch terms from the API
-        function fetchTerms(personId = '', officeId = '') {
+        function fetchTerms(personId = '', officeId = '', bodyId = '') {
             let url = '/api/term/get';
             const params = [];
 
@@ -235,56 +336,88 @@
             fetch(url)
                 .then(response => response.json())
                 .then(terms => {
-                    const tableBody = document.getElementById('termsTableBody');
-                    tableBody.innerHTML = '';
+                    // If bodyId is provided, filter terms to only show those for offices in the selected body
+                    if (bodyId) {
+                        // Fetch all offices for the selected body
+                        fetch(`/api/office/get?body_id=${bodyId}`)
+                            .then(response => response.json())
+                            .then(offices => {
+                                // Create a set of office IDs for the selected body
+                                const bodyOfficeIds = new Set(offices.map(office => office.id));
 
-                    terms.forEach(term => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${term.person_name || ''}</td>
-                            <td>${term.office_title || ''}</td>
-                            <td>${term.start || ''}</td>
-                            <td>${term.end || ''}</td>
-                            <td>${term.ordinal || ''}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary edit-btn" 
-                                        data-person-id="${term.person_id}" 
-                                        data-office-id="${term.office_id}">Edit</button>
-                                <button class="btn btn-sm btn-danger delete-btn" 
-                                        data-person-id="${term.person_id}" 
-                                        data-office-id="${term.office_id}">Delete</button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
+                                // Filter terms to only include those for offices in the selected body
+                                const filteredTerms = terms.filter(term => bodyOfficeIds.has(term.office_id));
 
-                    // Add event listeners to edit and delete buttons
-                    document.querySelectorAll('.edit-btn').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const personId = this.getAttribute('data-person-id');
-                            const officeId = this.getAttribute('data-office-id');
-                            openEditModal(personId, officeId);
-                        });
-                    });
-
-                    document.querySelectorAll('.delete-btn').forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            const personId = this.getAttribute('data-person-id');
-                            const officeId = this.getAttribute('data-office-id');
-                            deleteTerm(personId, officeId);
-                        });
-                    });
+                                // Update the table with the filtered terms
+                                updateTermsTable(filteredTerms);
+                            })
+                            .catch(error => console.error('Error fetching offices for body:', error));
+                    } else {
+                        // If no bodyId, show all terms
+                        updateTermsTable(terms);
+                    }
                 })
                 .catch(error => console.error('Error fetching terms:', error));
         }
 
+        // Function to update the terms table with the provided terms
+        function updateTermsTable(terms) {
+            const tableBody = document.getElementById('termsTableBody');
+            tableBody.innerHTML = '';
+
+            terms.forEach(term => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${term.person_name || ''}</td>
+                    <td>${term.office_title || ''}</td>
+                    <td>${term.start || ''}</td>
+                    <td>${term.end || ''}</td>
+                    <td>${term.ordinal || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary edit-btn" 
+                                data-person-id="${term.person_id}" 
+                                data-office-id="${term.office_id}">Edit</button>
+                        <button class="btn btn-sm btn-danger delete-btn" 
+                                data-person-id="${term.person_id}" 
+                                data-office-id="${term.office_id}">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const personId = this.getAttribute('data-person-id');
+                    const officeId = this.getAttribute('data-office-id');
+                    openEditModal(personId, officeId);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const personId = this.getAttribute('data-person-id');
+                    const officeId = this.getAttribute('data-office-id');
+                    deleteTerm(personId, officeId);
+                });
+            });
+        }
+
         // Add event listeners to filter dropdowns
         document.getElementById('personFilter').addEventListener('change', function() {
-            fetchTerms(this.value, document.getElementById('officeFilter').value);
+            fetchTerms(this.value, document.getElementById('officeFilter').value, document.getElementById('bodyFilter').value);
+        });
+
+        document.getElementById('bodyFilter').addEventListener('change', function() {
+            // When body filter changes, update the office filter
+            const bodyId = this.value;
+            fetchOffices(bodyId);
+            // Also update the terms list with the selected body filter
+            fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value, bodyId);
         });
 
         document.getElementById('officeFilter').addEventListener('change', function() {
-            fetchTerms(document.getElementById('personFilter').value, this.value);
+            fetchTerms(document.getElementById('personFilter').value, this.value, document.getElementById('bodyFilter').value);
         });
 
         // Function to open the edit modal and populate it with term data

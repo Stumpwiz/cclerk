@@ -25,7 +25,8 @@ def test_home_route(client):
 
     response = client.get("/")  # Simulate another GET request
     assert response.status_code == 200  # Check for a successful response
-    assert b"Welcome to Clerk App" in response.data  # Check that the response's HTML contains expected content
+    assert b"Generate Reports:" in response.data  # Check that the response's HTML contains expected content
+    assert b"Backup/Restore:" in response.data  # Check that the response's HTML contains expected content
 
 
 def test_login_route_get(client):
@@ -78,14 +79,6 @@ def test_letters_route(client):
     assert response.status_code == 200
     json_data = response.get_json()
     assert json_data == {"message": "This is the letters endpoint"}
-
-
-def test_rosters_route(client):
-    # Test the rosters API endpoint
-    response = client.get("/api/rosters/get")
-    assert response.status_code == 200
-    json_data = response.get_json()
-    assert json_data == {"message": "This is the rosters endpoint"}
 
 
 def test_users_route(client):
