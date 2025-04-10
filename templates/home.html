@@ -43,6 +43,19 @@
                                 fileItem.textContent = data.filename;
                                 filesList.appendChild(fileItem);
 
+                                // Add click event listener to the new file item
+                                fileItem.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    // Remove active class from all items
+                                    document.querySelectorAll('#backupFilesList a').forEach(function (i) {
+                                        i.classList.remove('active');
+                                    });
+                                    // Add active class to clicked item
+                                    this.classList.add('active');
+                                    // Update hidden input field for View form
+                                    document.getElementById('view_sql_file').value = this.textContent.trim();
+                                });
+
                                 // Show success message
                                 alert('Backup created successfully: ' + data.filename);
                             } else {
@@ -61,77 +74,17 @@
                 });
             }
 
-            // Find the view button in the Backup/Restore column
-            let viewBackupButton = null;
-            const backupSection = document.querySelector('.col-md-6:nth-child(2)'); // Right column (Backup/Restore)
-            if (backupSection) {
-                const viewButtons = backupSection.querySelectorAll('button.btn-primary');
-                viewButtons.forEach(function (button) {
-                    if (button.textContent.trim() === 'View') {
-                        viewBackupButton = button;
-                    }
-                });
-            }
-
-            // Add click event listener to the view button
-            if (viewBackupButton) {
-                viewBackupButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('backupFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-
-                    if (!selectedFile) {
-                        alert('Please select a file to view');
-                        return;
-                    }
-
-                    // Show loading indicator or disable button
-                    this.disabled = true;
-                    const originalText = this.innerHTML;
-                    this.innerHTML = 'Opening...';
-
-                    // Make AJAX request to view_file endpoint
-                    fetch('/view_file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            filename: selectedFile.textContent
-                        })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            if (data.success) {
-                                // If it's a PDF file, open it in a new tab
-                                if (data.pdf_url) {
-                                    window.open(data.pdf_url, '_blank');
-                                }
-                            } else {
-                                // Show error message
-                                alert('Failed to open file: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            // Show error message
-                            alert('Failed to open file: ' + error);
-                        });
-                });
-            }
-
-            // Define the reportsSection variable for use later
-            const reportsSection = document.querySelector('.col-md-6:nth-child(1)'); // Left column (Generate Reports)
 
             // Make backup files list items selectable
             const backupFileItems = document.querySelectorAll('#backupFilesList a');
+
+            // Select the first item by default if there are any items
+            if (backupFileItems.length > 0) {
+                backupFileItems[0].classList.add('active');
+                // Update hidden input field for View form with the first SQL file
+                document.getElementById('view_sql_file').value = backupFileItems[0].textContent.trim();
+            }
+
             backupFileItems.forEach(function (item) {
                 item.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -141,117 +94,11 @@
                     });
                     // Add active class to clicked item
                     this.classList.add('active');
+                    // Update hidden input field for View form
+                    document.getElementById('view_sql_file').value = this.textContent.trim();
                 });
             });
 
-            // Find the delete button in the Generate Reports column
-            let deleteReportsButton = null;
-            if (reportsSection) {
-                const deleteButtons = reportsSection.querySelectorAll('button.btn-danger');
-                deleteButtons.forEach(function (button) {
-                    if (button.textContent.trim() === 'Delete') {
-                        deleteReportsButton = button;
-                    }
-                });
-            }
-
-            // Add click event listener to the delete button in Generate Reports column
-            if (deleteReportsButton) {
-                deleteReportsButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('pdfFilesList');
-                    let selectedFile = filesList.querySelector('.active');
-
-                    // If no file is selected, select the first one
-                    if (!selectedFile && filesList.children.length > 0) {
-                        selectedFile = filesList.children[0];
-                        selectedFile.classList.add('active');
-                    }
-
-                    if (!selectedFile) {
-                        alert('Please select a file to delete');
-                        return;
-                    }
-
-                    // Confirm deletion
-                    if (!confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
-                        return;
-                    }
-
-                    // Show loading indicator or disable button
-                    this.disabled = true;
-                    const originalText = this.innerHTML;
-                    this.innerHTML = 'Deleting...';
-
-                    // Make AJAX request to delete_file endpoint
-                    fetch('/delete_file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            filename: selectedFile.textContent
-                        })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            if (data.success) {
-                                // Remove the file from the list
-                                selectedFile.remove();
-
-                                // Select the first item if available
-                                if (filesList.children.length > 0) {
-                                    filesList.children[0].classList.add('active');
-                                }
-
-                            } else {
-                                // Show error message
-                                alert('Failed to delete file: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            // Show error message
-                            alert('Failed to delete file: ' + error);
-                        });
-                });
-            }
-
-            // Find the delete button in the Backup/Restore column
-            let deleteBackupButton = null;
-            const backupSection = document.querySelector('.col-md-6:nth-child(2)'); // Right column (Backup/Restore)
-            if (backupSection) {
-                const deleteButtons = backupSection.querySelectorAll('button.btn-danger');
-                deleteButtons.forEach(function (button) {
-                    if (button.textContent.trim() === 'Delete') {
-                        deleteBackupButton = button;
-                    }
-                });
-            }
-
-            // Add click event listener to the delete button in Backup/Restore column
-            if (deleteBackupButton) {
-                deleteBackupButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('backupFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-
-                    if (!selectedFile) {
-                        alert('Please select a file to delete');
-                        return;
-                    }
-
-                    // Show dummy dialog
-                    alert('The file "' + selectedFile.textContent.trim() + '" has been set up for deletion.');
-                });
-            }
 
             // Make PDF files list items selectable
             const pdfFileItems = document.querySelectorAll('#pdfFilesList a');
@@ -276,6 +123,207 @@
                     document.getElementById('view_pdf_file').value = this.textContent.trim();
                 });
             });
+
+            // Add event handler for the View PDF button
+            const viewPdfButton = document.getElementById('btn_view_pdf');
+            if (viewPdfButton) {
+                // Get the form that contains the button
+                const viewPdfForm = viewPdfButton.closest('form');
+
+                // Add event listener to the form's submit event
+                viewPdfForm.addEventListener('submit', function (e) {
+                    // Always prevent the default form submission first
+                    e.preventDefault();
+
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('pdfFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    // Check if a file is selected
+                    if (!selectedFile) {
+                        alert('Please select a PDF file to view');
+                        return;
+                    }
+
+                    // Set the value of the hidden input field to the selected file
+                    document.getElementById('view_pdf_file').value = selectedFile.textContent.trim();
+
+                    // Now manually submit the form
+                    viewPdfForm.submit();
+                });
+            }
+
+            // Add event handler for the Delete PDF button
+            const deletePdfButton = document.getElementById('btn_delete_pdf');
+            if (deletePdfButton) {
+                deletePdfButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('pdfFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    // Check if a file is selected
+                    if (!selectedFile) {
+                        alert('Please select a PDF file to delete');
+                        return;
+                    }
+
+                    // Confirm deletion
+                    if (!confirm('Are you sure you want to delete this PDF? This action cannot be undone.')) {
+                        return;
+                    }
+
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    const originalText = this.innerHTML;
+                    this.innerHTML = 'Deleting...';
+
+                    // Make AJAX request to delete_file endpoint
+                    fetch('/delete_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: selectedFile.textContent.trim()
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            if (data.success) {
+                                // Remove the file from the list
+                                selectedFile.remove();
+
+                                // Select the first item if available
+                                if (filesList.children.length > 0) {
+                                    filesList.children[0].classList.add('active');
+                                    // Update hidden input field for View form
+                                    document.getElementById('view_pdf_file').value = filesList.children[0].textContent.trim();
+                                } else {
+                                    // Clear the hidden input field if no files are left
+                                    document.getElementById('view_pdf_file').value = '';
+                                }
+
+                                // Show success message
+                                alert('File deleted successfully');
+                            } else {
+                                // Show error message
+                                alert('Failed to delete file: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            // Show error message
+                            alert('Failed to delete file: ' + error);
+                        });
+                });
+            }
+
+            // Add event handler for the View SQL button
+            const viewSqlButton = document.getElementById('btn_view_sql');
+            if (viewSqlButton) {
+                viewSqlButton.addEventListener('click', function (e) {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('backupFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+                    const hiddenInput = document.getElementById('view_sql_file');
+
+                    // Check if a file is selected
+                    if (!selectedFile) {
+                        e.preventDefault(); // Prevent form submission
+                        alert('Please select a SQL file to view');
+                        return;
+                    }
+
+                    // Check if the hidden input field has a value
+                    if (!hiddenInput.value) {
+                        e.preventDefault(); // Prevent form submission
+                        alert('No SQL file selected');
+                        return;
+                    }
+
+                    // Set the value of the hidden input field to the selected file
+                    hiddenInput.value = selectedFile.textContent.trim();
+                });
+            }
+
+            // Add event handler for the Delete SQL button
+            const deleteSqlButton = document.getElementById('btn_delete_sql');
+            if (deleteSqlButton) {
+                deleteSqlButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('backupFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    // Check if a file is selected
+                    if (!selectedFile) {
+                        alert('Please select a SQL file to delete');
+                        return;
+                    }
+
+                    // Confirm deletion
+                    if (!confirm('Are you sure you want to delete this SQL file? This action cannot be undone.')) {
+                        return;
+                    }
+
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    const originalText = this.innerHTML;
+                    this.innerHTML = 'Deleting...';
+
+                    // Make AJAX request to delete_file endpoint
+                    fetch('/delete_file', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: selectedFile.textContent.trim()
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            if (data.success) {
+                                // Remove the file from the list
+                                selectedFile.remove();
+
+                                // Select the first item if available
+                                if (filesList.children.length > 0) {
+                                    filesList.children[0].classList.add('active');
+                                    // Update hidden input field for View form
+                                    document.getElementById('view_sql_file').value = filesList.children[0].textContent.trim();
+                                } else {
+                                    // Clear the hidden input field if no files are left
+                                    document.getElementById('view_sql_file').value = '';
+                                }
+
+                                // Show success message
+                                alert('File deleted successfully');
+                            } else {
+                                // Show error message
+                                alert('Failed to delete file: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+
+                            // Show error message
+                            alert('Failed to delete file: ' + error);
+                        });
+                });
+            }
         });
     </script>
     <style>
@@ -284,9 +332,11 @@
             flex-direction: column;
             min-height: calc(100vh - 150px); /* Adjust based on navbar and other elements */
         }
+
         .full-height-row {
             flex: 1;
         }
+
         .full-height-card {
             height: 100%;
         }
@@ -294,7 +344,7 @@
     <div class="container full-height-container">
         <div class="row full-height-row">
             <!-- Left Column - Generate Reports -->
-            <div class="col-md-6">
+            <div id="reports_column" class="col-md-6">
                 <div class="card mb-4 full-height-card">
                     <div class="card-header">
                         <h3>Generate Reports</h3>
@@ -328,13 +378,17 @@
                                         <!-- Action Buttons -->
                                         <div class="row">
                                             <div class="col-6 mb-2">
-                                                <form method="POST" action="{{ url_for('main.view_pdf') }}" target="_blank">
+                                                <form method="POST" action="{{ url_for('main.view_pdf') }}"
+                                                      target="_blank">
                                                     <input type="hidden" id="view_pdf_file" name="pdf_file" value="">
-                                                    <button type="submit" class="btn btn-sm btn-primary w-100">View</button>
+                                                    <button type="submit" id="btn_view_pdf"
+                                                            class="btn btn-sm btn-primary w-100">View
+                                                    </button>
                                                 </form>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="btn btn-sm btn-danger w-100">Delete
+                                                <button type="button" id="btn_delete_pdf"
+                                                        class="btn btn-sm btn-danger w-100">Delete
                                                 </button>
                                             </div>
                                         </div>
@@ -347,7 +401,7 @@
             </div>
 
             <!-- Right Column - Backup/Restore -->
-            <div class="col-md-6">
+            <div id="backup_column" class="col-md-6">
                 <div class="card mb-4 full-height-card">
                     <div class="card-header">
                         <h3>Backup/Restore</h3>
@@ -379,10 +433,17 @@
                                         <!-- Action Buttons -->
                                         <div class="row">
                                             <div class="col-6 mb-2">
-                                                <button type="button" class="btn btn-sm btn-primary w-100">View</button>
+                                                <form method="POST" action="{{ url_for('main.view_sql') }}"
+                                                      target="_blank">
+                                                    <input type="hidden" id="view_sql_file" name="sql_file" value="">
+                                                    <button type="submit" id="btn_view_sql"
+                                                            class="btn btn-sm btn-primary w-100">View
+                                                    </button>
+                                                </form>
                                             </div>
                                             <div class="col-6">
-                                                <button type="button" class="btn btn-sm btn-danger w-100">Delete
+                                                <button type="button" id="btn_delete_sql"
+                                                        class="btn btn-sm btn-danger w-100">Delete
                                                 </button>
                                             </div>
                                         </div>

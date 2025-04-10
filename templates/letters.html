@@ -93,8 +93,8 @@
                                     document.getElementById('delete_pdf_file').value = pdfFile;
                                 }
                             </script>
-                            <div class="d-flex justify-content-between mt-auto">
-                                <form method="POST" action="{{ url_for('letters.view_pdf') }}" class="me-2" target="_blank">
+                            <div class="d-flex justify-content-around mt-auto">
+                                <form method="POST" action="{{ url_for('letters.view_pdf') }}" target="_blank">
                                     <input type="hidden" id="view_pdf_file" name="pdf_file"
                                            value="">
                                     <button type="submit" class="btn btn-primary">View</button>

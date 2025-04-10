@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request
+from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file
 import os
 import subprocess
 import datetime
@@ -72,22 +72,23 @@ def view_file():
                 return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
 
             # Return a URL for the client to open the PDF in a new browser tab
-            pdf_url = url_for('main.serve_pdf', filename=filename)
-            return jsonify({"success": True, "pdf_url": pdf_url})
+            file_url = url_for('main.serve_pdf', filename=filename)
+            return jsonify({"success": True, "file_url": file_url})
 
         elif file_ext in ['.txt', '.sql']:
             # SQL backup files are in files_db_backups
             if file_ext == '.sql' and os.path.exists(os.path.join("files_db_backups", filename)):
                 file_path = os.path.join("files_db_backups", filename)
+                # Return a URL for the client to open the SQL file in a new browser tab
+                file_url = url_for('main.serve_sql', filename=filename)
+                return jsonify({"success": True, "file_url": file_url})
             # Text files might be in instance/letter_template
             elif file_ext == '.txt' and os.path.exists(os.path.join("instance", "letter_template", filename)):
                 file_path = os.path.join("instance", "letter_template", filename)
+                # For now, still open text files with default application
+                subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
             else:
                 return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
-
-            # Open text/SQL files with the default system application
-            # Use 'start' command on Windows to open with default application
-            subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
 
         else:
             return jsonify({"success": False, "error": f"Unsupported file type: {file_ext}"}), 400
@@ -109,10 +110,26 @@ def serve_pdf(filename):
         return redirect(url_for('main.index'))
 
     try:
-        from flask import send_file
         return send_file(pdf_path, mimetype='application/pdf')
     except Exception as e:
         flash(f'Error opening PDF: {e}', 'danger')
+        return redirect(url_for('main.index'))
+
+@main_bp.route("/serve_sql/<filename>")
+def serve_sql(filename):
+    """
+    Serve an SQL file directly to the browser as a text file.
+    """
+    sql_path = os.path.join("files_db_backups", filename)
+
+    if not os.path.exists(sql_path):
+        flash(f'SQL file {filename} not found.', 'danger')
+        return redirect(url_for('main.index'))
+
+    try:
+        return send_file(sql_path, mimetype='text/plain')
+    except Exception as e:
+        flash(f'Error opening SQL file: {e}', 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/view_pdf", methods=["POST"])
@@ -120,9 +137,26 @@ def view_pdf():
     """
     View the selected PDF file directly in the browser.
     """
+    # Check if files_roster_reports directory exists and has PDF files
+    pdfs_dir = os.path.join("files_roster_reports")
+    if not os.path.exists(pdfs_dir):
+        flash('No PDF files found. The files_roster_reports directory does not exist.', 'info')
+        return redirect(url_for('main.index'))
+
+    # Check if there are any PDF files in the directory
+    pdf_files = [f for f in os.listdir(pdfs_dir) if f.endswith('.pdf')]
+    if not pdf_files:
+        flash('There are currently no files in the files_roster_reports directory.', 'info')
+        return redirect(url_for('main.index'))
+
     pdf_file = request.form.get('pdf_file')
     if not pdf_file:
         flash('No PDF file selected.', 'danger')
+        return redirect(url_for('main.index'))
+
+    # Check if the requested file is actually in the list of PDF files in the directory
+    if pdf_file not in pdf_files:
+        flash(f'PDF file {pdf_file} is not in the files_roster_reports directory.', 'danger')
         return redirect(url_for('main.index'))
 
     pdf_path = os.path.join("files_roster_reports", pdf_file)
@@ -133,10 +167,44 @@ def view_pdf():
 
     # Serve the PDF file directly to the browser
     try:
-        from flask import send_file
         return send_file(pdf_path, mimetype='application/pdf')
     except Exception as e:
         flash(f'Error opening PDF: {e}', 'danger')
+        return redirect(url_for('main.index'))
+
+@main_bp.route("/view_sql", methods=["POST"])
+def view_sql():
+    """
+    View the selected SQL file directly in the browser as a text file.
+    """
+    # Check if files_db_backups directory exists and has SQL files
+    backup_dir = os.path.join("files_db_backups")
+    if not os.path.exists(backup_dir):
+        flash('No SQL files found. The files_db_backups directory does not exist.', 'info')
+        return redirect(url_for('main.index'))
+
+    # Check if there are any SQL files in the directory
+    sql_files = [f for f in os.listdir(backup_dir) if f.endswith('.sql')]
+    if not sql_files:
+        flash('There are currently no files in the files_db_backups directory.', 'info')
+        return redirect(url_for('main.index'))
+
+    sql_file = request.form.get('sql_file')
+    if not sql_file:
+        flash('No SQL file selected.', 'danger')
+        return redirect(url_for('main.index'))
+
+    sql_path = os.path.join("files_db_backups", sql_file)
+
+    if not os.path.exists(sql_path):
+        flash(f'SQL file {sql_file} not found.', 'danger')
+        return redirect(url_for('main.index'))
+
+    # Serve the SQL file directly to the browser as a text file
+    try:
+        return send_file(sql_path, mimetype='text/plain')
+    except Exception as e:
+        flash(f'Error opening SQL file: {e}', 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/delete_file", methods=["POST"])
