@@ -71,9 +71,9 @@ def view_file():
             else:
                 return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
 
-            # Open PDF with the default system application
-            # Use 'start' command on Windows to open with default application
-            subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
+            # Return a URL for the client to open the PDF in a new browser tab
+            pdf_url = url_for('main.serve_pdf', filename=filename)
+            return jsonify({"success": True, "pdf_url": pdf_url})
 
         elif file_ext in ['.txt', '.sql']:
             # SQL backup files are in files_db_backups
@@ -97,10 +97,28 @@ def view_file():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+@main_bp.route("/serve_pdf/<filename>")
+def serve_pdf(filename):
+    """
+    Serve a PDF file directly to the browser.
+    """
+    pdf_path = os.path.join("files_roster_reports", filename)
+
+    if not os.path.exists(pdf_path):
+        flash(f'PDF file {filename} not found.', 'danger')
+        return redirect(url_for('main.index'))
+
+    try:
+        from flask import send_file
+        return send_file(pdf_path, mimetype='application/pdf')
+    except Exception as e:
+        flash(f'Error opening PDF: {e}', 'danger')
+        return redirect(url_for('main.index'))
+
 @main_bp.route("/view_pdf", methods=["POST"])
 def view_pdf():
     """
-    View the selected PDF file using the default system application.
+    View the selected PDF file directly in the browser.
     """
     pdf_file = request.form.get('pdf_file')
     if not pdf_file:
@@ -113,13 +131,13 @@ def view_pdf():
         flash(f'PDF file {pdf_file} not found.', 'danger')
         return redirect(url_for('main.index'))
 
-    # Open the PDF with the default system application
+    # Serve the PDF file directly to the browser
     try:
-        subprocess.Popen(["cmd", "/c", "start", "", pdf_path], shell=True)
+        from flask import send_file
+        return send_file(pdf_path, mimetype='application/pdf')
     except Exception as e:
         flash(f'Error opening PDF: {e}', 'danger')
-
-    return redirect(url_for('main.index'))
+        return redirect(url_for('main.index'))
 
 @main_bp.route("/delete_file", methods=["POST"])
 def delete_file():

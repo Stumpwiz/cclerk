@@ -106,7 +106,12 @@
                             this.disabled = false;
                             this.innerHTML = originalText;
 
-                            if (!data.success) {
+                            if (data.success) {
+                                // If it's a PDF file, open it in a new tab
+                                if (data.pdf_url) {
+                                    window.open(data.pdf_url, '_blank');
+                                }
+                            } else {
                                 // Show error message
                                 alert('Failed to open file: ' + data.error);
                             }
@@ -323,7 +328,7 @@
                                         <!-- Action Buttons -->
                                         <div class="row">
                                             <div class="col-6 mb-2">
-                                                <form method="POST" action="{{ url_for('main.view_pdf') }}">
+                                                <form method="POST" action="{{ url_for('main.view_pdf') }}" target="_blank">
                                                     <input type="hidden" id="view_pdf_file" name="pdf_file" value="">
                                                     <button type="submit" class="btn btn-sm btn-primary w-100">View</button>
                                                 </form>

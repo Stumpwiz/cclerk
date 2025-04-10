@@ -121,7 +121,7 @@ def create_template():
 @letters_bp.route('/view_pdf', methods=['POST'])
 def view_pdf():
     """
-    View the selected PDF file using Adobe Acrobat.
+    View the selected PDF file directly in the browser.
     """
     pdf_file = request.form.get('pdf_file')
     if not pdf_file:
@@ -135,15 +135,13 @@ def view_pdf():
         flash(f'PDF file {pdf_file} not found.', 'danger')
         return redirect(url_for('letters.get_letters_html'))
 
-    # Open the PDF with Adobe Acrobat
-    acrobat_path = r"C:\Program Files (x86)\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+    # Serve the PDF file directly to the browser
     try:
-        subprocess.Popen([acrobat_path, pdf_path])
-        flash(f'Opened {pdf_file} in Adobe Acrobat.', 'success')
+        from flask import send_file
+        return send_file(pdf_path, mimetype='application/pdf')
     except Exception as e:
         flash(f'Error opening PDF: {e}', 'danger')
-
-    return redirect(url_for('letters.get_letters_html'))
+        return redirect(url_for('letters.get_letters_html'))
 
 
 @letters_bp.route('/delete_pdf', methods=['POST'])
