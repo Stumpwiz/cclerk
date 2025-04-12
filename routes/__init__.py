@@ -6,6 +6,7 @@ from .body import body_bp
 from .office import office_bp
 from .person import person_bp
 from .term import term_bp
+from routes.report import report_bp
 
 
 def register_blueprints(app):
@@ -20,3 +21,4 @@ def register_blueprints(app):
     # Register main application blueprints without URL prefixes
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(report_bp)  # ✅ Add this

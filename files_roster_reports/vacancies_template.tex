@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable}
+\usepackage{titlesec}
+\usepackage{datetime}
+\usepackage{fontspec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{array}
+\setmainfont{TeX Gyre Pagella}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Generated \VAR{generated}}
+\lhead{\VAR{title}}
+\rfoot{\thepage}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{\VAR{title}}} \\
+    \vspace{0.5em}
+    {\large Residents Council}
+\end{center}
+
+\BLOCK{ for body_name, members in grouped.items() }
+
+\vspace{1.5em}
+\section*{\VAR{body_name}}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{3in} >{\raggedright\arraybackslash}p{3in}}
+\textbf{Office} & \textbf{Incumbent} \\
+\hline
+\BLOCK{ for member in members }
+\VAR{member.title} & \VAR{member.incumbent_display} \\
+\BLOCK{ endfor }
+\end{longtable}
+
+\BLOCK{ endfor }
+
+\end{document}

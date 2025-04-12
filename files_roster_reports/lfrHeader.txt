@@ -1,0 +1,25 @@
+\documentclass[12pt,twoside]{article}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{multicol}
+\usepackage{sectsty}
+\allsectionsfont{\centering}
+\begin{document}
+\raggedbottom
+\def\prepDate{{{current}}}
+\def\version{Generated~\prepDate}
+\def\footerLine{\small \version}
+\begin{center}\includegraphics{../static/residentCouncilLogoSmall} \\
+\Large {\bf  Long Form Roster}
+\end{center}
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot[ROF,LEF]{\thepage}
+\fancyfoot[LOF,REF]{\footerLine}
+\fancyfoot[COF,CEF]{}
+\renewcommand{\headrulewidth}{0.0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\large
+\setcounter{secnumdepth}{0}
