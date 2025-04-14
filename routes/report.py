@@ -17,10 +17,12 @@ def long_form_roster():
     from datetime import datetime
     from collections import defaultdict
     import os
+    from flask import jsonify, redirect, url_for
 
     # Define absolute path to report folder
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
+
 
     tex_filename = "long_form_roster.tex"
     pdf_filename = "long_form_roster.pdf"
@@ -81,7 +83,15 @@ def long_form_roster():
             500
         )
 
-    return send_file(pdf_path, mimetype='application/pdf')
+    # Step 7: Clean up intermediate files
+    for ext in [".aux", ".log"]:
+        try:
+            os.remove(os.path.join(report_dir, f"long_form_roster{ext}"))
+        except FileNotFoundError:
+            pass
+
+    # Return JSON response with the filename
+    return jsonify({"success": True, "filename": pdf_filename})
 
 
 @report_bp.route("/short")
@@ -89,10 +99,12 @@ def short_form_roster():
     from datetime import datetime
     from collections import defaultdict
     import os
+    from flask import jsonify, redirect, url_for
 
     # Define absolute path to report folder
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
+
 
     tex_filename = "short_form_roster.tex"
     pdf_filename = "short_form_roster.pdf"
@@ -153,7 +165,15 @@ def short_form_roster():
             500
         )
 
-    return send_file(pdf_path, mimetype='application/pdf')
+    # Step 7: Clean up intermediate files
+    for ext in [".aux", ".log"]:
+        try:
+            os.remove(os.path.join(report_dir, f"short_form_roster{ext}"))
+        except FileNotFoundError:
+            pass
+
+    # Return JSON response with the filename
+    return jsonify({"success": True, "filename": pdf_filename})
 
 
 @report_bp.route("/expirations")
@@ -161,10 +181,12 @@ def expirations_report():
     from datetime import datetime
     from collections import defaultdict
     import os
+    from flask import jsonify, redirect, url_for
 
     # Absolute paths
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
+
 
     tex_filename = "expirations_report.tex"
     pdf_filename = "expirations_report.pdf"
@@ -231,7 +253,15 @@ def expirations_report():
             500
         )
 
-    return send_file(pdf_path, mimetype='application/pdf')
+    # Step 7: Clean up intermediate files
+    for ext in [".aux", ".log"]:
+        try:
+            os.remove(os.path.join(report_dir, f"expirations_report{ext}"))
+        except FileNotFoundError:
+            pass
+
+    # Return JSON response with the filename
+    return jsonify({"success": True, "filename": pdf_filename})
 
 
 @report_bp.route("/vacancies")
@@ -239,10 +269,12 @@ def vacancies_report():
     from datetime import datetime
     from collections import defaultdict
     import os
+    from flask import jsonify, redirect, url_for
 
     # Define absolute paths for robustness
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
+
 
     tex_filename = "vacancies_report.tex"
     pdf_filename = "vacancies_report.pdf"
@@ -307,83 +339,12 @@ def vacancies_report():
             500
         )
 
-    return send_file(pdf_path, mimetype='application/pdf')
+    # Step 7: Clean up intermediate files
+    for ext in [".aux", ".log"]:
+        try:
+            os.remove(os.path.join(report_dir, f"vacancies_report{ext}"))
+        except FileNotFoundError:
+            pass
 
-# @report_bp.route("/testvacancies")
-# def test_vacancies_demo():
-#     from datetime import datetime
-#     from collections import defaultdict
-#
-#     # Simulated test data
-#     class FakeRecord:
-#         def __init__(self, body, title, first, last):
-#             self.name = body
-#             self.title = title
-#             self.first = first
-#             self.last = last
-#             self.body_precedence = 1
-#             self.office_precedence = 1
-#
-#             self.is_vacant = first.startswith("(Vacancy") and last == " "
-#             self.incumbent_display = first if self.is_vacant else f"{first} {last}"
-#
-#     records = [
-#         FakeRecord("Finance", "Chair", "Nancy", "Burke"),
-#         FakeRecord("Finance", "Vice Chair", "(Vacancy 1)", " "),
-#         FakeRecord("Dining", "Member", "Gerry", "Buckley"),
-#         FakeRecord("Dining", "Member", "(Vacant)", " "),
-#     ]
-#
-#     grouped = defaultdict(list)
-#     for r in records:
-#         grouped[r.name].append(r)
-#
-#     # Render using the actual vacancies template
-#     env = Environment(
-#         loader=FileSystemLoader("files_roster_reports"),
-#         block_start_string='\\BLOCK{', block_end_string='}',
-#         variable_start_string='\\VAR{', variable_end_string='}',
-#         comment_start_string='\\%{', comment_end_string='}',
-#         autoescape=False
-#     )
-#
-#     template = env.get_template("vacancies_template.tex")
-#     rendered_tex = template.render(
-#         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-#         title="Vacancies Test Output",
-#         grouped=grouped
-#     )
-#
-#     basedir = os.path.abspath(os.path.dirname(__file__))
-#     report_dir = os.path.join(basedir, "..", "files_roster_reports")
-#     report_dir = os.path.abspath(report_dir)
-#
-#     tex_filename = "vacancies_test.tex"
-#     tex_path = os.path.join(report_dir, tex_filename)
-#     with open(tex_path, "w", encoding="utf-8") as f:
-#         f.write(rendered_tex)
-#
-#     result = subprocess.run(
-#         ["xelatex", "-interaction=nonstopmode", "-output-directory", report_dir, tex_path],
-#         cwd=report_dir,
-#         capture_output=True,
-#         text=True
-#     )
-#
-#     cleanup_exts = [".aux", ".log", ".synctex.gz"]
-#     for ext in cleanup_exts:
-#         try:
-#             os.remove(os.path.join("files_roster_reports", f"vacancies_test{ext}"))
-#         except FileNotFoundError:
-#             pass
-#
-#     pdf_path = os.path.join("files_roster_reports", "vacancies_test.pdf")
-#     if not os.path.exists(pdf_path):
-#         return (
-#             f"PDF not found.\n\n"
-#             f"LaTeX stdout:\n{result.stdout}\n\n"
-#             f"LaTeX stderr:\n{result.stderr}",
-#             500
-#         )
-#
-#     return send_file(pdf_path, mimetype='application/pdf')
+    # Return JSON response with the filename
+    return jsonify({"success": True, "filename": pdf_filename})
