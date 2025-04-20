@@ -2,8 +2,6 @@
 # the many-to-many relationship between persons and offices.
 
 from extensions import db
-from models.person import Person
-from models.office import Office
 
 class Term(db.Model):
     __tablename__ = 'term'

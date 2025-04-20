@@ -5,17 +5,18 @@
         <h2 class="mb-4">Letters And Template Management</h2>
 
         <script>
+            /* global bootstrap */
             document.addEventListener('DOMContentLoaded', function () {
                 // Focus on the recipient field when the page loads
                 document.getElementById('recipient').focus();
 
-                // Add event listener for when the edit template modal is shown
+                // Add an event listener for when the edit template modal is shown
                 document.getElementById('editTemplateModal').addEventListener('shown.bs.modal', function () {
                     // Focus on the header field
                     document.getElementById('header').focus();
                 });
 
-                // Add event listener for when the create template modal is shown
+                // Add an event listener for when the create-template modal is shown
                 document.getElementById('createTemplateModal').addEventListener('shown.bs.modal', function () {
                     // Focus on the new header field
                     document.getElementById('new_header').focus();
@@ -74,8 +75,9 @@
                                 </div>
                             </div>
                             <script>
+                                /* global bootstrap */
                                 function selectPdf(element) {
-                                    // Remove active class from all items
+                                    // Remove the active class from all items
                                     document.querySelectorAll('.pdf-item').forEach(item => {
                                         item.classList.remove('active');
                                     });

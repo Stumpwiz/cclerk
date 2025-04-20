@@ -28,8 +28,8 @@ class User(db.Model):
         def decorator(f):
             @wraps(f)
             def decorated_function(*args, **kwargs):
-                # Extract user role from the request or session (example logic here)
-                user_role = request.headers.get("X-Role", "user")  # Replace with actual role fetching logic
+                # Extract the user role from the request or session (example logic here)
+                user_role = request.headers.get("X-Role", "user")
 
                 if user_role != self:
                     return jsonify({"error": "Unauthorized"}), 403

@@ -15,21 +15,21 @@
                 <label for="personFilter" class="form-label">Filter by Person:</label>
                 <select class="form-select" id="personFilter">
                     <option value="">All Persons</option>
-                    <!-- Options will be populated by JavaScript -->
+                    <!-- JavaScript will populate options -->
                 </select>
             </div>
             <div class="col-md-4">
                 <label for="bodyFilter" class="form-label">Filter by Body:</label>
                 <select class="form-select" id="bodyFilter">
                     <option value="">All Bodies</option>
-                    <!-- Options will be populated by JavaScript -->
+                    <!-- JavaScript will populate options -->
                 </select>
             </div>
             <div class="col-md-4">
                 <label for="officeFilter" class="form-label">Filter by Office:</label>
                 <select class="form-select" id="officeFilter">
                     <option value="">All Offices</option>
-                    <!-- Options will be populated by JavaScript -->
+                    <!-- JavaScript will populate options -->
                 </select>
             </div>
         </div>
@@ -53,7 +53,7 @@
                             </tr>
                         </thead>
                         <tbody id="termsTableBody">
-                            <!-- Table rows will be populated by JavaScript -->
+                            <!-- JavaScript will populate table rows -->
                         </tbody>
                     </table>
                 </div>
@@ -75,21 +75,21 @@
                             <label for="personId" class="form-label">Person</label>
                             <select class="form-select" id="personId" name="personId" required>
                                 <option value="">Select a Person</option>
-                                <!-- Options will be populated by JavaScript -->
+                                <!-- JavaScript will populate options -->
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="bodyId" class="form-label">Body</label>
                             <select class="form-select" id="bodyId" name="bodyId">
                                 <option value="">Select a Body</option>
-                                <!-- Options will be populated by JavaScript -->
+                                <!-- JavaScript will populate options -->
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="officeId" class="form-label">Office</label>
                             <select class="form-select" id="officeId" name="officeId" required>
                                 <option value="">Select an Office</option>
-                                <!-- Options will be populated by JavaScript -->
+                                <!-- JavaScript will populate options -->
                             </select>
                         </div>
                         <div class="mb-3">
@@ -166,6 +166,9 @@
 
     <!-- JavaScript for API interactions -->
     <script>
+        /* global bootstrap */
+        // noinspection JSUnresolvedVariable
+        // The following code uses variables from database tables that will be resolved at runtime
         // Fetch and display all terms, persons, bodies, and offices when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchPersons();
@@ -174,7 +177,7 @@
             // Initial fetch of terms with empty filters
             fetchTerms('', '', '');
 
-            // Add event listener for when the create term modal is shown
+            // Add an event listener for when the "create term" modal is shown
             document.getElementById('createTermModal').addEventListener('shown.bs.modal', function() {
                 // Focus on the person dropdown
                 document.getElementById('personId').focus();
@@ -190,14 +193,14 @@
                     const personFilter = document.getElementById('personFilter');
                     personFilter.innerHTML = '<option value="">All Persons</option>';
 
-                    // Populate person dropdown in create form
+                    // Populate person dropdown in "create" form
                     const personIdSelect = document.getElementById('personId');
                     personIdSelect.innerHTML = '<option value="">Select a Person</option>';
 
                     persons.forEach(person => {
                         const fullName = `${person.first || ''} ${person.last}`;
 
-                        // Add to filter dropdown
+                        // Add to the filter dropdown
                         const filterOption = document.createElement('option');
                         filterOption.value = person.id;
                         filterOption.textContent = fullName;
@@ -227,7 +230,7 @@
                     bodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
 
                     bodies.forEach(body => {
-                        // Add to filter dropdown
+                        // Add to the filter dropdown
                         const filterOption = document.createElement('option');
                         filterOption.value = body.id;
                         filterOption.textContent = body.name;
@@ -293,20 +296,20 @@
                     const officeFilter = document.getElementById('officeFilter');
                     officeFilter.innerHTML = '<option value="">All Offices</option>';
 
-                    // Populate office dropdown in create form
+                    // Populate the office dropdown in "create" form
                     const officeIdSelect = document.getElementById('officeId');
                     officeIdSelect.innerHTML = '<option value="">Select an Office</option>';
 
                     offices.forEach(office => {
                         const officeTitle = `${office.title} (${office.body_name})`;
 
-                        // Add to filter dropdown
+                        // Add to the filter dropdown
                         const filterOption = document.createElement('option');
                         filterOption.value = office.id;
                         filterOption.textContent = officeTitle;
                         officeFilter.appendChild(filterOption);
 
-                        // Add to create form dropdown
+                        // Add to the "create form" dropdown
                         const createOption = document.createElement('option');
                         createOption.value = office.id;
                         createOption.textContent = officeTitle;
@@ -360,7 +363,7 @@
                 .catch(error => console.error('Error fetching terms:', error));
         }
 
-        // Function to update the terms table with the provided terms
+        // Function to update the "terms" table with the provided terms
         function updateTermsTable(terms) {
             const tableBody = document.getElementById('termsTableBody');
             tableBody.innerHTML = '';
@@ -473,7 +476,7 @@
                 }),
             })
             .then(response => response.json())
-            .then(data => {
+            .then(() => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createTermModal'));
                 modal.hide();
                 document.getElementById('createTermForm').reset();
@@ -504,7 +507,7 @@
                 }),
             })
             .then(response => response.json())
-            .then(data => {
+            .then(() => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editTermModal'));
                 modal.hide();
                 fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value);
@@ -519,7 +522,7 @@
                     method: 'DELETE',
                 })
                 .then(response => response.json())
-                .then(data => {
+                .then(() => {
                     fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value);
                 })
                 .catch(error => console.error('Error deleting term:', error));

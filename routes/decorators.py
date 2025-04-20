@@ -3,12 +3,12 @@ from flask import request, jsonify
 
 
 def role_required(required_role):
-    """Decorator to restrict access based on user role."""
+    """Decorator to restrict access based on the user role."""
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Extract role from headers or authenticated user session
+            # Extract the role from headers or authenticated user session
             # This would depend on your authentication or role set-up
             user_role = request.headers.get('X-Role', 'user')
 

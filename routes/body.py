@@ -124,7 +124,7 @@ def view_bodies():
     # Query all bodies ordered by name
     bodies = Body.query.order_by(Body.name).all()
 
-    # Render the template with the bodies data
+    # Render the template with the "bodies" data
     return render_template("body.html", bodies=bodies)
 
 

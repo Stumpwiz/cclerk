@@ -1,8 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 import os
-import re
 import subprocess
-import tempfile
 import shutil
 import re
 from extensions import db
@@ -63,7 +61,7 @@ def get_letters_html():
     # Get the letter template from the database
     template = LetterTemplate.get_singleton()
 
-    # Get list of PDF files in the files_letters directory
+    # Get the list of PDF files in the files_letters directory
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
     pdf_files = []
 
@@ -411,6 +409,6 @@ def generate_letter():
     except Exception as e:
         flash(f'Unexpected error: {e}', 'danger')
         # No need to clean up the files_letters directory as it's a permanent directory
-        # The LaTeX files will be overwritten on subsequent letter generations
+        # The LaTeX files will be overwritten on later letter generations
 
     return redirect(url_for('letters.get_letters_html'))

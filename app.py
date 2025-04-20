@@ -24,7 +24,7 @@ def create_app():
     # - Authentication routes (/login, /logout) are in routes/auth_routes.py
 
     with app.app_context():
-        db.create_all()  # Create all tables (like the users table)
+        db.create_all()  # Create all tables (like the "users" table)
 
     return app
 

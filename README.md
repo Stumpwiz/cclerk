@@ -5,7 +5,13 @@ This project supports clerical tasks assigned to the administrative assistant of
 ![Build Status](https://img.shields.io/badge/status-passing%20%7C%20WIP-yellow)
 
 ## Description
-A detailed explanation of the project, including its purpose and functionality.
+The project is a web application that supports the administrative assistant of the MRRA Residents Council. The
+administrative assistant is responsible for the following tasks:
+- Welcome Letters Generation and Management;
+- Management of the Database That Supports Committee Rosters;
+- Generation of Rosters, Vacancy Report, and Expiring Terms Report.
+
+This application supports all these tasks via a web interface.
 
 ## Table of Contents
 - [Features](#features)

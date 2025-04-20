@@ -40,7 +40,7 @@
                     </div>
                     <div class="card-body">
                         <ul class="list-group" id="bodiesList">
-                            <!-- Body items will be populated by JavaScript -->
+                            <!-- JavaScript will populate Body items -->
                         </ul>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                     </div>
                     <div class="card-body">
                         <ul class="list-group" id="officesList">
-                            <!-- Office items will be populated by JavaScript -->
+                            <!-- JavaScript will populate Office items -->
                         </ul>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                             <label for="editBodyId" class="form-label">Body</label>
                             <select class="form-select" id="editBodyId" name="bodyId" required>
                                 <option value="">Select a Body</option>
-                                <!-- Options will be populated by JavaScript -->
+                                <!-- JavaScript will populate options -->
                             </select>
                         </div>
                         <div class="mb-3">
@@ -139,6 +139,9 @@
 
     <!-- JavaScript for API interactions -->
     <script>
+        /* global bootstrap */
+        // noinspection JSUnresolvedVariable
+        // The following code uses variables from database tables that will be resolved at runtime
         let selectedBodyId = null;
 
         // Fetch and display all bodies when the page loads
@@ -163,7 +166,7 @@
                     editBodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
 
                     bodies.forEach((body, index) => {
-                        // Add to bodies list
+                        // Add to the "bodies" list
                         const listItem = document.createElement('li');
                         listItem.className = 'list-group-item body-item';
                         listItem.textContent = body.name;
@@ -190,24 +193,24 @@
 
         // Function to select a body
         function selectBody(bodyId, bodyName) {
-            // Update selected body
+            // Update the selected body
             selectedBodyId = bodyId;
 
-            // Update UI to show selected body
+            // Update UI to show the selected body
             document.querySelectorAll('.body-item').forEach(item => {
                 item.classList.remove('active');
-                if (item.dataset.id == bodyId) {
+                if (item.dataset.id === String(bodyId)) {
                     item.classList.add('active');
                 }
             });
 
-            // Update selected body name
+            // Update the selected body name
             document.getElementById('selectedBodyName').textContent = bodyName;
 
-            // Enable create office button
+            // Enable the "create office" button
             document.getElementById('showCreateModalBtn').disabled = false;
 
-            // Set the body ID in the create form
+            // Set the body ID in the "create" form
             document.getElementById('bodyId').value = bodyId;
 
             // Fetch offices for the selected body
@@ -287,16 +290,16 @@
                 .catch(error => console.error('Error fetching office details:', error));
         }
 
-        // Show the create modal when the create button is clicked
+        // Show the "create" modal when the "create" button is clicked
         document.getElementById('showCreateModalBtn').addEventListener('click', function () {
-            // Set the body ID in the create form
+            // Set the body ID in the "create" form
             document.getElementById('bodyId').value = selectedBodyId;
 
-            // Show the create modal
+            // Show the "create" modal
             const createModalElement = document.getElementById('createOfficeModal');
             const createModal = new bootstrap.Modal(createModalElement);
 
-            // Add event listener to set focus on title input when modal is shown
+            // Add an event listener to set focus on title input when modal is shown
             createModalElement.addEventListener('shown.bs.modal', function () {
                 document.getElementById('title').focus();
             }, {once: true}); // Use once: true to ensure the event listener is removed after it's triggered
@@ -322,12 +325,12 @@
                 }),
             })
                 .then(response => response.json())
-                .then(data => {
+                .then(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('createOfficeModal'));
                     modal.hide();
                     document.getElementById('createOfficeForm').reset();
 
-                    // Refresh the offices list for the selected body
+                    // Refresh the "offices" list for the selected body
                     fetchOfficesForBody(selectedBodyId);
                 })
                 .catch(error => console.error('Error creating office:', error));
@@ -357,11 +360,11 @@
                 }),
             })
                 .then(response => response.json())
-                .then(data => {
+                .then(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
                     modal.hide();
 
-                    // Refresh the offices list for the selected body
+                    // Refresh the "offices" list for the selected body
                     fetchOfficesForBody(selectedBodyId);
                 })
                 .catch(error => console.error('Error updating office:', error));
@@ -374,8 +377,8 @@
                     method: 'DELETE',
                 })
                     .then(response => response.json())
-                    .then(data => {
-                        // Refresh the offices list for the selected body
+                    .then(() => {
+                        // Refresh the "offices" list for the selected body
                         fetchOfficesForBody(selectedBodyId);
                     })
                     .catch(error => console.error('Error deleting office:', error));

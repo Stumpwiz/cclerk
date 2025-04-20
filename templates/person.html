@@ -27,7 +27,7 @@
                             </tr>
                         </thead>
                         <tbody id="personsTableBody">
-                            <!-- Table rows will be populated by JavaScript -->
+                            <!-- JavaScript will populate table rows -->
                         </tbody>
                     </table>
                 </div>
@@ -118,11 +118,14 @@
 
     <!-- JavaScript for API interactions -->
     <script>
+        /* global bootstrap */
+        // noinspection JSUnresolvedVariable
+        // The following code uses variables from database tables that will be resolved at runtime
         // Fetch and display all persons when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchPersons();
 
-            // Add event listener for when the create person modal is shown
+            // Add an event listener for when the "create person" modal is shown
             document.getElementById('createPersonModal').addEventListener('shown.bs.modal', function() {
                 // Focus on the first name field
                 document.getElementById('first').focus();
@@ -210,15 +213,15 @@
             // Check if it's exactly 4 characters
             if (apt.length !== 4) return false;
 
-            // Check if first character is 'L', 'K', or 'S'
+            // Check if the first character is 'L', 'K', or 'S'
             const firstChar = apt.charAt(0);
             if (firstChar !== 'L' && firstChar !== 'K' && firstChar !== 'S') return false;
 
-            // Check if last 3 characters are numeric
+            // Check if the last 3 characters are numeric
             const numericPart = apt.substring(1);
             if (!/^\d{3}$/.test(numericPart)) return false;
 
-            // Check if numeric part is in range 101-799
+            // Check if the numeric part is in range 101-799
             const numValue = parseInt(numericPart, 10);
             return numValue >= 101 && numValue <= 799;
         }
@@ -228,7 +231,7 @@
             const input = document.getElementById(inputId);
             input.classList.add('is-invalid');
 
-            // Check if error message element already exists
+            // Check if an error message element already exists
             let errorDiv = input.nextElementSibling;
             if (!errorDiv || !errorDiv.classList.contains('invalid-feedback')) {
                 errorDiv = document.createElement('div');
@@ -314,14 +317,14 @@
                 }
                 throw new Error('Unexpected response format');
             })
-            .then(data => {
+            .then(() => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createPersonModal'));
                 modal.hide();
                 document.getElementById('createPersonForm').reset();
                 fetchPersons();
             })
             .catch(error => {
-                // Display error message in the modal
+                // Display an error message in the modal
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'alert alert-danger';
                 errorDiv.textContent = error.message;
@@ -410,13 +413,13 @@
                 }
                 throw new Error('Unexpected response format');
             })
-            .then(data => {
+            .then(() => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editPersonModal'));
                 modal.hide();
                 fetchPersons();
             })
             .catch(error => {
-                // Display error message in the modal
+                // Display an error message in the modal
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'alert alert-danger';
                 errorDiv.textContent = error.message;
@@ -442,7 +445,7 @@
                     method: 'DELETE',
                 })
                 .then(response => response.json())
-                .then(data => {
+                .then(() => {
                     fetchPersons();
                 })
                 .catch(error => console.error('Error deleting person:', error));

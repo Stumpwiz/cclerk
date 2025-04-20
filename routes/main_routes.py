@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file, current_app
+from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file
 import os
 import subprocess
 import datetime
@@ -11,11 +11,11 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route("/")
 def index():
-    # Redirect to log in if user is not authenticated
+    # Redirect to log in if the user is not authenticated
     if not session.get("user_id"):
         return redirect(url_for("auth.login"))
 
-    # Get list of backup files
+    # Get the list of backup files
     backup_files = []
     backup_dir = os.path.join("files_db_backups")
     if os.path.exists(backup_dir):
@@ -23,9 +23,9 @@ def index():
             if file.startswith("backup") and file.endswith(".sql"):
                 backup_files.append(file)
 
-    # Get list of PDF files from files_roster_reports directory
+    # Get the list of PDF files from the files_roster_reports directory
     pdf_files = []
-    # Check files_roster_reports directory
+    # Check the files_roster_reports directory
     pdfs_dir = os.path.join("files_roster_reports")
     if os.path.exists(pdfs_dir):
         for file in os.listdir(pdfs_dir):
@@ -36,11 +36,11 @@ def index():
 
 @main_bp.route("/backup", methods=["POST"])
 def backup_database():
-    # Create timestamp for the backup filename exactly as specified
+    # Create the timestamp for the backup filename exactly as specified
     timestamp = datetime.datetime.now().strftime("%y%m%d%H%M%S")
     backup_filename = f"backup{timestamp}.sql"
 
-    # Create files_db_backups directory if it doesn't exist
+    # Create the files_db_backups directory if it doesn't exist
     backup_dir = os.path.join("files_db_backups")
     os.makedirs(backup_dir, exist_ok=True)
 
@@ -68,7 +68,7 @@ def view_file():
         file_ext = os.path.splitext(filename)[1].lower()
 
         if file_ext == '.pdf':
-            # PDF files are in files_roster_reports directory
+            # PDF files are in the files_roster_reports directory
             if os.path.exists(os.path.join("files_roster_reports", filename)):
                 file_path = os.path.join("files_roster_reports", filename)
             else:
@@ -88,7 +88,7 @@ def view_file():
             # Text files might be in instance/letter_template
             elif file_ext == '.txt' and os.path.exists(os.path.join("instance", "letter_template", filename)):
                 file_path = os.path.join("instance", "letter_template", filename)
-                # For now, still open text files with default application
+                # For now, still open text files with the default application
                 subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
             else:
                 return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
@@ -140,7 +140,7 @@ def view_pdf():
     """
     View the selected PDF file directly in the browser.
     """
-    # Check if files_roster_reports directory exists and has PDF files
+    # Check if the files_roster_reports directory exists and has PDF files
     pdfs_dir = os.path.join("files_roster_reports")
     if not os.path.exists(pdfs_dir):
         flash('No PDF files found. The files_roster_reports directory does not exist.', 'info')
@@ -180,7 +180,7 @@ def view_sql():
     """
     View the selected SQL file directly in the browser as a text file.
     """
-    # Check if files_db_backups directory exists and has SQL files
+    # Check if the files_db_backups directory exists and has SQL files
     backup_dir = os.path.join("files_db_backups")
     if not os.path.exists(backup_dir):
         flash('No SQL files found. The files_db_backups directory does not exist.', 'info')
@@ -287,7 +287,7 @@ def restore_database():
             try:
                 shutil.copy2(temp_backup, db_path)
             except Exception:
-                # If we can't restore the backup, there's not much we can do
+                # If we can't restore the backup, there's nothing we can do
                 pass
 
         return jsonify({"success": False, "error": str(e)}), 500
@@ -301,33 +301,25 @@ def delete_file():
 
         # Determine file type and location based on extension
         file_ext = os.path.splitext(filename)[1].lower()
+        file_path = None  # Initialize file_path to None
 
         if file_ext == '.pdf':
-            # PDF files are in files_roster_reports directory
+            # PDF files are in the files_roster_reports directory
             file_path = os.path.join("files_roster_reports", filename)
-            if not os.path.exists(file_path):
-                return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
-
-            # Delete the file
-            os.remove(file_path)
-
-        elif file_ext in ['.txt', '.sql']:
+        elif file_ext == '.sql':
             # SQL backup files are in files_db_backups
-            if file_ext == '.sql':
-                file_path = os.path.join("files_db_backups", filename)
-            # Text files might be in instance/letter_template
-            elif file_ext == '.txt':
-                file_path = os.path.join("instance", "letter_template", filename)
-
-            if not os.path.exists(file_path):
-                return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
-
-            # Delete the file
-            os.remove(file_path)
-
+            file_path = os.path.join("files_db_backups", filename)
+        elif file_ext == '.txt':
+            # Text files are in instance/letter_template
+            file_path = os.path.join("instance", "letter_template", filename)
         else:
             return jsonify({"success": False, "error": f"Unsupported file type: {file_ext}"}), 400
 
+        if not file_path or not os.path.exists(file_path):
+            return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
+
+        # Delete the file
+        os.remove(file_path)
         return jsonify({"success": True})
 
     except Exception as e:

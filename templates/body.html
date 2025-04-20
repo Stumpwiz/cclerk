@@ -4,7 +4,7 @@
     <div class="container">
         <h2 class="mb-4">Administrative Bodies</h2>
 
-        <!-- Top section with button -->
+        <!-- Top section with a button -->
         <div class="mb-4">
             <!-- Button to trigger create modal -->
             <button type="button" class="btn btn-success create-body-btn" data-bs-toggle="modal" data-bs-target="#createBodyModal">
@@ -131,6 +131,9 @@
 
     <!-- JavaScript for API interactions -->
     <script>
+        /* global bootstrap */
+        // noinspection JSUnresolvedVariable
+        // The following code uses variables from database tables that will be resolved at runtime
         // Add event listeners when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             // Add event listeners to edit and delete buttons
@@ -163,7 +166,7 @@
                 selectBody(firstBodyRow);
             }
 
-            // Add event listener for when the create body modal is shown
+            // Add an event listener for when the create-body modal is shown
             document.getElementById('createBodyModal').addEventListener('shown.bs.modal', function() {
                 // Focus on the name field
                 document.getElementById('name').focus();
@@ -172,12 +175,12 @@
 
         // Function to select a body
         function selectBody(row) {
-            // Remove selected class from all rows
+            // Remove the selected class from all rows
             document.querySelectorAll('.body-row').forEach(r => {
                 r.classList.remove('table-primary');
             });
 
-            // Add selected class to the clicked row
+            // Add the selected class to the clicked row
             row.classList.add('table-primary');
         }
 
@@ -191,6 +194,8 @@
                     document.getElementById('editMission').value = body.mission || '';
                     document.getElementById('editPrecedence').value = body.precedence;
 
+                    // Access the Bootstrap Modal object from the global bootstrap namespace
+                    // provided by bootstrap.bundle.min.js included in base.html
                     const editModal = new bootstrap.Modal(document.getElementById('editBodyModal'));
                     editModal.show();
                 })

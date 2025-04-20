@@ -1,12 +1,9 @@
 # routes/report.py
 
-from flask import Blueprint, send_file
+from flask import Blueprint
 from models.report_record import ReportRecord
 from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
 import subprocess
-import os
-from collections import defaultdict
 
 # Define the blueprint for all report-related routes
 report_bp = Blueprint("report", __name__, url_prefix="/report")
@@ -17,9 +14,9 @@ def long_form_roster():
     from datetime import datetime
     from collections import defaultdict
     import os
-    from flask import jsonify, redirect, url_for
+    from flask import jsonify
 
-    # Define absolute path to report folder
+    # Define the absolute path to the report folder
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
 
@@ -56,7 +53,7 @@ def long_form_roster():
         grouped=grouped
     )
 
-    # Step 4: Write .tex file
+    # Step 4: Write the .tex file
     with open(tex_path, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -67,7 +64,7 @@ def long_form_roster():
         except FileNotFoundError:
             pass
 
-    # Step 6: Compile with xelatex using absolute path
+    # Step 6: Compile with xelatex using the absolute path
     result = subprocess.run(
         ["xelatex", "-interaction=nonstopmode", "-output-directory", report_dir, tex_path],
         cwd=report_dir,
@@ -99,9 +96,9 @@ def short_form_roster():
     from datetime import datetime
     from collections import defaultdict
     import os
-    from flask import jsonify, redirect, url_for
+    from flask import jsonify
 
-    # Define absolute path to report folder
+    # Define the absolute path to the report folder
     basedir = os.path.abspath(os.path.dirname(__file__))
     report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
 
@@ -181,7 +178,7 @@ def expirations_report():
     from datetime import datetime
     from collections import defaultdict
     import os
-    from flask import jsonify, redirect, url_for
+    from flask import jsonify
 
     # Absolute paths
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -226,7 +223,7 @@ def expirations_report():
         grouped=grouped
     )
 
-    # Step 4: Write LaTeX file
+    # Step 4: Write the LaTeX file
     with open(tex_path, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -269,7 +266,7 @@ def vacancies_report():
     from datetime import datetime
     from collections import defaultdict
     import os
-    from flask import jsonify, redirect, url_for
+    from flask import jsonify
 
     # Define absolute paths for robustness
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -282,7 +279,9 @@ def vacancies_report():
     pdf_path = os.path.join(report_dir, pdf_filename)
 
     # Query and sort all records
-    records = ReportRecord.query.order_by(
+    records = ReportRecord.query.filter(
+        ReportRecord.first.like('(Vacan%')
+    ).order_by(
         ReportRecord.body_precedence,
         ReportRecord.office_precedence
     ).all()
@@ -290,7 +289,7 @@ def vacancies_report():
     # Group by body and tag vacancies
     grouped = defaultdict(list)
     for r in records:
-        is_vacant = (r.first and r.first.startswith("(Vacancy") and r.last == " ")
+        is_vacant = (r.first and r.first.startswith("(Vacan") and r.last == " ")
         full_name = r.first if is_vacant else f"{r.first or ''} {r.last or ''}".strip()
 
         r.is_vacant = is_vacant

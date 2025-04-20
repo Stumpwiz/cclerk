@@ -1,7 +1,6 @@
 # models/office.py.  An area of responsibility for a given body.
 
 from extensions import db
-from models.body import Body
 
 class Office(db.Model):
     __tablename__ = 'office'

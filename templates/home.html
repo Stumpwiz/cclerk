@@ -50,13 +50,13 @@
                             // Add click event listener to the new file item
                             fileItem.addEventListener('click', function(e) {
                                 e.preventDefault();
-                                // Remove active class from all items
+                                // Remove the active class from all items
                                 filesList.querySelectorAll('a').forEach(function(i) {
                                     i.classList.remove('active');
                                 });
                                 // Add active class to clicked item
                                 this.classList.add('active');
-                                // Update hidden input field for View form
+                                // Update the hidden input field for the View form
                                 document.getElementById('view_pdf_file').value = this.textContent.trim();
                             });
                         }
@@ -67,10 +67,10 @@
                         });
                         fileItem.classList.add('active');
 
-                        // Update hidden input field for View form
+                        // Update the hidden input field for the View form
                         document.getElementById('view_pdf_file').value = filename;
                     } else {
-                        // Show error message
+                        // Show the error message
                         alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                     }
                 })
@@ -79,7 +79,7 @@
                     this.disabled = false;
                     this.innerHTML = originalText;
 
-                    // Show error message
+                    // Show the error message
                     alert('Failed to generate PDF: ' + error);
                 });
             });
@@ -130,13 +130,13 @@
                             // Add click event listener to the new file item
                             fileItem.addEventListener('click', function(e) {
                                 e.preventDefault();
-                                // Remove active class from all items
+                                // Remove the active class from all items
                                 filesList.querySelectorAll('a').forEach(function(i) {
                                     i.classList.remove('active');
                                 });
                                 // Add active class to clicked item
                                 this.classList.add('active');
-                                // Update hidden input field for View form
+                                // Update the hidden input field for the View form
                                 document.getElementById('view_pdf_file').value = this.textContent.trim();
                             });
                         }
@@ -147,10 +147,10 @@
                         });
                         fileItem.classList.add('active');
 
-                        // Update hidden input field for View form
+                        // Update the hidden input field for the View form
                         document.getElementById('view_pdf_file').value = filename;
                     } else {
-                        // Show error message
+                        // Show the error message
                         alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                     }
                 })
@@ -159,7 +159,7 @@
                     this.disabled = false;
                     this.innerHTML = originalText;
 
-                    // Show error message
+                    // Show the error message
                     alert('Failed to generate PDF: ' + error);
                 });
             });
@@ -210,13 +210,13 @@
                             // Add click event listener to the new file item
                             fileItem.addEventListener('click', function(e) {
                                 e.preventDefault();
-                                // Remove active class from all items
+                                // Remove the active class from all items
                                 filesList.querySelectorAll('a').forEach(function(i) {
                                     i.classList.remove('active');
                                 });
                                 // Add active class to clicked item
                                 this.classList.add('active');
-                                // Update hidden input field for View form
+                                // Update the hidden input field for the View form
                                 document.getElementById('view_pdf_file').value = this.textContent.trim();
                             });
                         }
@@ -227,10 +227,10 @@
                         });
                         fileItem.classList.add('active');
 
-                        // Update hidden input field for View form
+                        // Update the hidden input field for the View form
                         document.getElementById('view_pdf_file').value = filename;
                     } else {
-                        // Show error message
+                        // Show the error message
                         alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                     }
                 })
@@ -239,7 +239,7 @@
                     this.disabled = false;
                     this.innerHTML = originalText;
 
-                    // Show error message
+                    // Show the error message
                     alert('Failed to generate PDF: ' + error);
                 });
             });
@@ -290,13 +290,13 @@
                             // Add click event listener to the new file item
                             fileItem.addEventListener('click', function(e) {
                                 e.preventDefault();
-                                // Remove active class from all items
+                                // Remove the active class from all items
                                 filesList.querySelectorAll('a').forEach(function(i) {
                                     i.classList.remove('active');
                                 });
                                 // Add active class to clicked item
                                 this.classList.add('active');
-                                // Update hidden input field for View form
+                                // Update the hidden input field for the View form
                                 document.getElementById('view_pdf_file').value = this.textContent.trim();
                             });
                         }
@@ -307,10 +307,10 @@
                         });
                         fileItem.classList.add('active');
 
-                        // Update hidden input field for View form
+                        // Update the hidden input field for the View form
                         document.getElementById('view_pdf_file').value = filename;
                     } else {
-                        // Show error message
+                        // Show the error message
                         alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                     }
                 })
@@ -319,7 +319,7 @@
                     this.disabled = false;
                     this.innerHTML = originalText;
 
-                    // Show error message
+                    // Show the error message
                     alert('Failed to generate PDF: ' + error);
                 });
             });
@@ -341,7 +341,7 @@
             // Add click event listener to the backup button
             if (backupButton) {
                 backupButton.addEventListener('click', function () {
-                    // Show loading indicator or disable button
+                    // Show the loading indicator or disable button
                     this.disabled = true;
                     this.innerHTML = 'Backing up...';
 
@@ -370,20 +370,20 @@
                                 // Add click event listener to the new file item
                                 fileItem.addEventListener('click', function (e) {
                                     e.preventDefault();
-                                    // Remove active class from all items
+                                    // Remove the active class from all items
                                     document.querySelectorAll('#backupFilesList a').forEach(function (i) {
                                         i.classList.remove('active');
                                     });
                                     // Add active class to clicked item
                                     this.classList.add('active');
-                                    // Update hidden input field for View form
+                                    // Update the hidden input field for the View form
                                     document.getElementById('view_sql_file').value = this.textContent.trim();
                                 });
 
-                                // Show success message
+                                // Show the success message
                                 alert('Backup created successfully: ' + data.filename);
                             } else {
-                                // Show error message
+                                // Show the error message
                                 alert('Backup failed: ' + data.error);
                             }
                         })
@@ -392,7 +392,7 @@
                             this.disabled = false;
                             this.innerHTML = 'Backup';
 
-                            // Show error message
+                            // Show the error message
                             alert('Backup failed: ' + error);
                         });
                 });
@@ -416,7 +416,7 @@
                         return;
                     }
 
-                    // Show loading indicator or disable button
+                    // Show the loading indicator or disable button
                     this.disabled = true;
                     this.innerHTML = 'Restoring...';
 
@@ -437,10 +437,10 @@
                             this.innerHTML = 'Restore';
 
                             if (data.success) {
-                                // Show success message
+                                // Show the success message
                                 alert('Database restored successfully from: ' + selectedFile.textContent.trim());
                             } else {
-                                // Show error message
+                                // Show the error message
                                 alert('Restore failed: ' + data.error);
                             }
                         })
@@ -449,7 +449,7 @@
                             this.disabled = false;
                             this.innerHTML = 'Restore';
 
-                            // Show error message
+                            // Show the error message
                             alert('Restore failed: ' + error);
                         });
                 });
@@ -462,20 +462,20 @@
             // Select the first item by default if there are any items
             if (backupFileItems.length > 0) {
                 backupFileItems[0].classList.add('active');
-                // Update hidden input field for View form with the first SQL file
+                // Update the hidden input field for the View form with the first SQL file
                 document.getElementById('view_sql_file').value = backupFileItems[0].textContent.trim();
             }
 
             backupFileItems.forEach(function (item) {
                 item.addEventListener('click', function (e) {
                     e.preventDefault();
-                    // Remove active class from all items
+                    // Remove the active class from all items
                     backupFileItems.forEach(function (i) {
                         i.classList.remove('active');
                     });
                     // Add active class to clicked item
                     this.classList.add('active');
-                    // Update hidden input field for View form
+                    // Update the hidden input field for the View form
                     document.getElementById('view_sql_file').value = this.textContent.trim();
                 });
             });
@@ -487,31 +487,31 @@
             // Select the first item by default if there are any items
             if (pdfFileItems.length > 0) {
                 pdfFileItems[0].classList.add('active');
-                // Update hidden input field for View form with the first PDF file
+                // Update the hidden input field for the View form with the first PDF file
                 document.getElementById('view_pdf_file').value = pdfFileItems[0].textContent.trim();
             }
 
             pdfFileItems.forEach(function (item) {
                 item.addEventListener('click', function (e) {
                     e.preventDefault();
-                    // Remove active class from all items
+                    // Remove the active class from all items
                     pdfFileItems.forEach(function (i) {
                         i.classList.remove('active');
                     });
                     // Add active class to clicked item
                     this.classList.add('active');
-                    // Update hidden input field for View form
+                    // Update the hidden input field for the View form
                     document.getElementById('view_pdf_file').value = this.textContent.trim();
                 });
             });
 
-            // Add event handler for the View PDF button
+            // Add an event handler for the View PDF button
             const viewPdfButton = document.getElementById('btn_view_pdf');
             if (viewPdfButton) {
                 // Get the form that contains the button
                 const viewPdfForm = viewPdfButton.closest('form');
 
-                // Add event listener to the form's submit event
+                // Add an event listener to the form's "submit" event
                 viewPdfForm.addEventListener('submit', function (e) {
                     // Always prevent the default form submission first
                     e.preventDefault();
@@ -534,7 +534,7 @@
                 });
             }
 
-            // Add event handler for the Delete PDF button
+            // Add an event handler for the Delete PDF button
             const deletePdfButton = document.getElementById('btn_delete_pdf');
             if (deletePdfButton) {
                 deletePdfButton.addEventListener('click', function () {
@@ -553,7 +553,7 @@
                         return;
                     }
 
-                    // Show loading indicator or disable button
+                    // Show the loading indicator or disable button
                     this.disabled = true;
                     const originalText = this.innerHTML;
                     this.innerHTML = 'Deleting...';
@@ -581,17 +581,17 @@
                                 // Select the first item if available
                                 if (filesList.children.length > 0) {
                                     filesList.children[0].classList.add('active');
-                                    // Update hidden input field for View form
+                                    // Update the hidden input field for the View form
                                     document.getElementById('view_pdf_file').value = filesList.children[0].textContent.trim();
                                 } else {
                                     // Clear the hidden input field if no files are left
                                     document.getElementById('view_pdf_file').value = '';
                                 }
 
-                                // Show success message
+                                // Show the success message
                                 alert('File deleted successfully');
                             } else {
-                                // Show error message
+                                // Show the error message
                                 alert('Failed to delete file: ' + data.error);
                             }
                         })
@@ -600,13 +600,13 @@
                             this.disabled = false;
                             this.innerHTML = originalText;
 
-                            // Show error message
+                            // Show the error message
                             alert('Failed to delete file: ' + error);
                         });
                 });
             }
 
-            // Add event handler for the View SQL button
+            // Add an event handler for the View SQL button
             const viewSqlButton = document.getElementById('btn_view_sql');
             if (viewSqlButton) {
                 viewSqlButton.addEventListener('click', function (e) {
@@ -634,7 +634,7 @@
                 });
             }
 
-            // Add event handler for the Delete SQL button
+            // Add an event handler for the Delete SQL button
             const deleteSqlButton = document.getElementById('btn_delete_sql');
             if (deleteSqlButton) {
                 deleteSqlButton.addEventListener('click', function () {
@@ -653,7 +653,7 @@
                         return;
                     }
 
-                    // Show loading indicator or disable button
+                    // Show the loading indicator or disable button
                     this.disabled = true;
                     const originalText = this.innerHTML;
                     this.innerHTML = 'Deleting...';
@@ -681,17 +681,17 @@
                                 // Select the first item if available
                                 if (filesList.children.length > 0) {
                                     filesList.children[0].classList.add('active');
-                                    // Update hidden input field for View form
+                                    // Update the hidden input field for the View form
                                     document.getElementById('view_sql_file').value = filesList.children[0].textContent.trim();
                                 } else {
                                     // Clear the hidden input field if no files are left
                                     document.getElementById('view_sql_file').value = '';
                                 }
 
-                                // Show success message
+                                // Show the success message
                                 alert('File deleted successfully');
                             } else {
-                                // Show error message
+                                // Show the error message
                                 alert('Failed to delete file: ' + data.error);
                             }
                         })
@@ -700,7 +700,7 @@
                             this.disabled = false;
                             this.innerHTML = originalText;
 
-                            // Show error message
+                            // Show the error message
                             alert('Failed to delete file: ' + error);
                         });
                 });
@@ -735,10 +735,10 @@
                             <!-- Left Column - Buttons -->
                             <div class="col-md-6">
                                 <div class="d-flex flex-column justify-content-start h-100">
+                                    <button type="button" id="btn_expiring" class="btn btn-primary mb-3">Expiring Terms</button>
                                     <button type="button" id="btn_long_form" class="btn btn-primary mb-3">Long Form Roster</button>
                                     <button type="button" id="btn_short_form" class="btn btn-primary mb-3">Short Form Roster</button>
                                     <button type="button" id="btn_vacancies" class="btn btn-primary mb-3">Vacancies</button>
-                                    <button type="button" id="btn_expiring" class="btn btn-primary mb-3">Expiring Terms</button>
                                 </div>
                             </div>
 
@@ -785,7 +785,7 @@
             <div id="backup_column" class="col-md-6">
                 <div class="card mb-4 full-height-card">
                     <div class="card-header">
-                        <h3>Backup/Restore</h3>
+                        <h3>Backup/Restore Database</h3>
                     </div>
                     <div class="card-body" style="min-height: 300px;">
                         <div class="row h-100">
