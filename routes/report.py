@@ -309,7 +309,7 @@ def vacancies_report():
     template = env.get_template("vacancies_template.tex")
     rendered_tex = template.render(
         generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        title="Vacancies and Appointments",
+        title="Vacancies",
         grouped=grouped
     )
 

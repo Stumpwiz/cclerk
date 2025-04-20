@@ -18,7 +18,6 @@ def get_bodies():
                 "id": body.body_id,
                 "name": body.name,
                 "mission": body.mission,
-                "image": body.body_image,
                 "precedence": body.body_precedence
             })
         return jsonify({"error": "Body not found"}), 404
@@ -28,7 +27,6 @@ def get_bodies():
         "id": body.body_id,
         "name": body.name,
         "mission": body.mission,
-        "image": body.body_image,
         "precedence": body.body_precedence
     } for body in bodies])
 
@@ -48,7 +46,6 @@ def create_body():
     new_body = Body(
         name=data['name'],
         mission=data.get('mission'),
-        body_image=data.get('image'),
         body_precedence=data.get('precedence', 0)
     )
 
@@ -59,7 +56,6 @@ def create_body():
         "id": new_body.body_id,
         "name": new_body.name,
         "mission": new_body.mission,
-        "image": new_body.body_image,
         "precedence": new_body.body_precedence
     }), 201
 
@@ -84,8 +80,6 @@ def update_body():
         body.name = data['name']
     if 'mission' in data:
         body.mission = data['mission']
-    if 'image' in data:
-        body.body_image = data['image']
     if 'precedence' in data:
         body.body_precedence = data['precedence']
 
@@ -95,7 +89,6 @@ def update_body():
         "id": body.body_id,
         "name": body.name,
         "mission": body.mission,
-        "image": body.body_image,
         "precedence": body.body_precedence
     })
 
@@ -144,7 +137,6 @@ def create_body_html():
     name = request.form.get('name')
     mission = request.form.get('mission')
     precedence = request.form.get('precedence')
-    image = request.form.get('image')
 
     if not name:
         flash('Name is required', 'danger')
@@ -153,7 +145,6 @@ def create_body_html():
     new_body = Body(
         name=name,
         mission=mission,
-        body_image=image,
         body_precedence=float(precedence) if precedence else 0
     )
 
@@ -174,7 +165,6 @@ def update_body_html():
     name = request.form.get('name')
     mission = request.form.get('mission')
     precedence = request.form.get('precedence')
-    image = request.form.get('image')
 
     if not body_id:
         flash('Body ID is required', 'danger')
@@ -187,7 +177,6 @@ def update_body_html():
 
     body.name = name
     body.mission = mission
-    body.body_image = image
     body.body_precedence = float(precedence) if precedence else 0
 
     db.session.commit()

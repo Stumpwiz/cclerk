@@ -1,42 +1,54 @@
-\documentclass[11pt]{article}
-\usepackage[margin=1in]{geometry}
-\usepackage{longtable}
+\documentclass[12pt,twoside]{article}
+\usepackage{lastpage}
+\usepackage{sectsty}
+\usepackage[top=0.65in, bottom=0.75in, left=0.75in, right=0.75in]{geometry}
 \usepackage{titlesec}
 \usepackage{datetime}
-\usepackage{fontspec}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{array}
-\setmainfont{TeX Gyre Pagella}
 
 \titleformat{\section}{\normalfont\Large\bfseries}{}{0pt}{}
 
 \pagestyle{fancy}
-\fancyhf{}
-\rhead{Generated \VAR{generated}}
-\lhead{\VAR{title}}
-\rfoot{\thepage}
+\fancyhead{}
+\newcommand{\version}{Generated \VAR{generated}}
+\newcommand{\footerLine}{\small \version}
+\fancyfoot[ROF,LEF]{\thepage}
+\fancyfoot[LOF,REF]{\footerLine}
+\fancyfoot[COF,CEF]{}
+\renewcommand{\headrulewidth}{0.0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\allsectionsfont{\centering}
 
 \begin{document}
-
+\raggedbottom
 \begin{center}
-    {\LARGE \textbf{\VAR{title}}} \\
+    \includegraphics{../static/residentCouncilLogoSmall} \\
     \vspace{0.5em}
-    {\large Residents Council}
+    {\LARGE \textbf{\VAR{title}}}
 \end{center}
 
 \BLOCK{ for body_name, members in grouped.items() }
 
-\vspace{1.5em}
+\vspace{0.5em}
 \section*{\VAR{body_name}}
 
-\begin{longtable}{>{\raggedright\arraybackslash}p{1.75in} >{\raggedright\arraybackslash}p{1.75in} >{\raggedright\arraybackslash}p{2.25in} >{\raggedright\arraybackslash}p{1.5in} >{\raggedright\arraybackslash}p{0.75in}}
+\begin{center}
+\small
+\vspace{0.5em}
+\renewcommand{\arraystretch}{1.0}
+\begin{center}
+\small
+\begin{tabular}{llllc}
 \textbf{Incumbent} & \textbf{Office} & \textbf{Email} & \textbf{Phone} & \textbf{Apt} \\
 \hline
 \BLOCK{ for member in members }
 \VAR{member.first} \VAR{member.last} & \VAR{member.title} & \VAR{member.email} & \VAR{member.phone} & \VAR{member.apt} \\
 \BLOCK{ endfor }
-\end{longtable}
+\end{tabular}
+\end{center}
+\end{center}
 
 \BLOCK{ endfor }
 

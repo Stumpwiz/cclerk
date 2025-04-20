@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file
+from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file, current_app
 import os
 import subprocess
 import datetime
+import time
+import shutil
+from extensions import db
 
 # Define a blueprint for main routes
 main_bp = Blueprint('main', __name__)
@@ -206,6 +209,88 @@ def view_sql():
     except Exception as e:
         flash(f'Error opening SQL file: {e}', 'danger')
         return redirect(url_for('main.index'))
+
+@main_bp.route("/restore", methods=["POST"])
+def restore_database():
+    """
+    Restore the database from a selected SQL backup file.
+    """
+    # Get the selected SQL file from the request
+    sql_file = request.json.get("filename")
+    if not sql_file:
+        return jsonify({"success": False, "error": "No SQL file selected"}), 400
+
+    # Check if the file exists
+    backup_dir = os.path.join("files_db_backups")
+    sql_path = os.path.join(backup_dir, sql_file)
+
+    if not os.path.exists(sql_path):
+        return jsonify({"success": False, "error": f"SQL file {sql_file} not found"}), 404
+
+    # Database path
+    db_path = os.path.join("instance", "clerk.sqlite3")
+    temp_backup = f"{db_path}.bak"
+    temp_new_db = f"{db_path}.new"
+
+    try:
+        # Close all database connections
+        db.engine.dispose()
+
+        # Create a new empty database file
+        if os.path.exists(temp_new_db):
+            os.remove(temp_new_db)
+        open(temp_new_db, 'a').close()
+
+        # Restore from the SQL file to the new database
+        command = f"sqlite3 {temp_new_db} < {sql_path}"
+
+        # On Windows, we need to use shell=True to handle the redirection
+        subprocess.run(command, shell=True, check=True)
+
+        # Create a backup of the current database
+        # Use copy2 instead of rename to avoid file lock issues
+        if os.path.exists(db_path):
+            if os.path.exists(temp_backup):
+                os.remove(temp_backup)
+            shutil.copy2(db_path, temp_backup)
+
+        # Replace the current database with the new one
+        # First try to remove the current database
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                if os.path.exists(db_path):
+                    os.remove(db_path)
+                break
+            except PermissionError:
+                if attempt < max_attempts - 1:
+                    # Wait a bit and try again
+                    time.sleep(0.5)
+                else:
+                    raise
+
+        # Now move the new database to the correct location
+        shutil.move(temp_new_db, db_path)
+
+        # If successful, remove the temporary backup
+        if os.path.exists(temp_backup):
+            try:
+                os.remove(temp_backup)
+            except PermissionError:
+                # If we can't remove the backup, that's okay
+                pass
+
+        return jsonify({"success": True, "message": f"Database restored successfully from {sql_file}"})
+    except Exception as e:
+        # If there was an error, try to restore the original database
+        if os.path.exists(temp_backup) and not os.path.exists(db_path):
+            try:
+                shutil.copy2(temp_backup, db_path)
+            except Exception:
+                # If we can't restore the backup, there's not much we can do
+                pass
+
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @main_bp.route("/delete_file", methods=["POST"])
 def delete_file():

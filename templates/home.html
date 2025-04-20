@@ -327,11 +327,14 @@
             // Find all buttons
             const buttons = document.querySelectorAll('button.btn-primary');
 
-            // Find the backup button by its text content
+            // Find the backup and restore buttons by their text content
             let backupButton = null;
+            let restoreButton = null;
             buttons.forEach(function (button) {
                 if (button.textContent.trim() === 'Backup') {
                     backupButton = button;
+                } else if (button.textContent.trim() === 'Restore') {
+                    restoreButton = button;
                 }
             });
 
@@ -391,6 +394,63 @@
 
                             // Show error message
                             alert('Backup failed: ' + error);
+                        });
+                });
+            }
+
+            // Add click event listener to the restore button
+            if (restoreButton) {
+                restoreButton.addEventListener('click', function () {
+                    // Get the selected file from the list
+                    const filesList = document.getElementById('backupFilesList');
+                    const selectedFile = filesList.querySelector('.active');
+
+                    // Check if a file is selected
+                    if (!selectedFile) {
+                        alert('Please select a SQL file to restore from');
+                        return;
+                    }
+
+                    // Confirm restoration
+                    if (!confirm('Are you sure you want to restore the database from this backup? This will overwrite the current database and cannot be undone.')) {
+                        return;
+                    }
+
+                    // Show loading indicator or disable button
+                    this.disabled = true;
+                    this.innerHTML = 'Restoring...';
+
+                    // Make AJAX request to restore endpoint
+                    fetch('/restore', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            filename: selectedFile.textContent.trim()
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = 'Restore';
+
+                            if (data.success) {
+                                // Show success message
+                                alert('Database restored successfully from: ' + selectedFile.textContent.trim());
+                            } else {
+                                // Show error message
+                                alert('Restore failed: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Re-enable button
+                            this.disabled = false;
+                            this.innerHTML = 'Restore';
+
+                            // Show error message
+                            alert('Restore failed: ' + error);
                         });
                 });
             }
