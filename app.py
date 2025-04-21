@@ -1,19 +1,26 @@
-from flask import Flask
+import click
+from flask import Flask, current_app
+from flask.cli import with_appcontext
+
 from config import Config
 from extensions import db, migrate
 from routes import register_blueprints
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     register_blueprints(app)
 
     # Load configuration
-    app.config.from_object(Config)
-    if app.config["SQLALCHEMY_DATABASE_URI"] == "DATABASE_URL not set.":
-        raise ValueError("DATABASE_URL is not set!")
-    if not app.config.get("SECRET_KEY"):
-        raise ValueError("SECRET_KEY is not set! Please configure it properly in the environment or config.")
+    if test_config is None:
+        app.config.from_object(Config)
+        if app.config["SQLALCHEMY_DATABASE_URI"] == "DATABASE_URL not set.":
+            raise ValueError("DATABASE_URL is not set!")
+        if not app.config.get("SECRET_KEY"):
+            raise ValueError("SECRET_KEY is not set! Please configure it properly in the environment or config.")
+    else:
+        # Load the test config if passed in
+        app.config.from_mapping(test_config)
 
     # Initialize extensions
     db.init_app(app)
@@ -25,6 +32,14 @@ def create_app():
 
     with app.app_context():
         db.create_all()  # Create all tables (like the "users" table)
+
+    @click.command('init-db')
+    @with_appcontext
+    def init_db_command():
+        from db_utils import init_db
+        """Clear the existing data and create new tables/views from schema.sql."""
+        init_db()
+        click.echo(f"Initialized test database from schema.sql at {current_app.config['DATABASE']}")
 
     return app
 
