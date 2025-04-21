@@ -18,6 +18,7 @@ This application supports all these tasks via a web interface.
 - [Getting Started](#getting-started)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Database Migrations](#database-migrations)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
@@ -49,6 +50,23 @@ Run the Flask app:
 flask run
 ```
 Visit [http://localhost:5000](http://localhost:5000).
+
+## Database Migrations
+This project uses Flask-Migrate (Alembic) to manage database migrations. 
+
+### Basic Migration Commands
+- Initialize migrations: `flask db init`
+- Create a migration: `flask db migrate -m "Description of changes"`
+- Apply migrations: `flask db upgrade`
+
+### Resetting Migrations
+If you encounter issues with migrations being out of sync with the database, we've provided a script to reset the migration process:
+
+```bash
+python scripts/reset_migrations.py
+```
+
+For detailed instructions on resetting migrations, see [scripts/README_MIGRATION_RESET.md](scripts/README_MIGRATION_RESET.md).
 
 ## Testing
 Run all tests:

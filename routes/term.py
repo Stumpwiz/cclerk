@@ -32,13 +32,13 @@ def get_terms():
 
     if person_id:
         # Get all terms for a specific person
-        terms = Term.query.filter_by(term_person_id=person_id).all()
+        terms = Term.query.filter_by(term_person_id=person_id).join(Person).order_by(Person.first, Person.last).all()
     elif office_id:
         # Get all terms for a specific office
-        terms = Term.query.filter_by(term_office_id=office_id).all()
+        terms = Term.query.filter_by(term_office_id=office_id).join(Person).order_by(Person.first, Person.last).all()
     else:
         # Get all terms
-        terms = Term.query.all()
+        terms = Term.query.join(Person).order_by(Person.first, Person.last).all()
 
     return jsonify([{
         "person_id": term.term_person_id,
