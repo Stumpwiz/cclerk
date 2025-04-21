@@ -2,7 +2,7 @@
 This project supports clerical tasks assigned to the administrative assistant of the 
 [Mercy Ridge Residents Council](https://mrra.online/).
 
-![Build Status](https://img.shields.io/badge/status-passing%20%7C%20WIP-yellow)
+![Build Status](https://img.shields.io/badge/status-passing-success)
 
 ## Description
 The project is a web application that supports the administrative assistant of the MRRA Residents Council. The
@@ -29,12 +29,13 @@ This application supports all these tasks via a web interface.
 - Generation of Rosters, Vacancy Report, and Expiring Terms Report
 
 ## Getting Started
-Instructions to get started with the application.
+This project will first be hosted on a local server, using mod_wsgi on Apache.  The server will be hosted on a Windows 
+server.  The server will be accessed via a web browser. More will be added as the project progresses.
 
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your/repo.git
+   git clone https://github.com/Stumpwiz/cclerk
    ```
 2. Navigate into the directory and set up the environment:
    ```bash
@@ -52,7 +53,8 @@ flask run
 Visit [http://localhost:5000](http://localhost:5000).
 
 ## Database Migrations
-This project uses Flask-Migrate (Alembic) to manage database migrations. 
+This project uses Flask-Migrate (Alembic) to manage database migrations. The database is managed using SQLAlchemy, but
+it is out of sync.  This needs to be fixed.
 
 ### Basic Migration Commands
 - Initialize migrations: `flask db init`
@@ -60,7 +62,7 @@ This project uses Flask-Migrate (Alembic) to manage database migrations.
 - Apply migrations: `flask db upgrade`
 
 ### Resetting Migrations
-If you encounter issues with migrations being out of sync with the database, we've provided a script to reset the migration process:
+This needs to be fixed.
 
 ```bash
 python scripts/reset_migrations.py
@@ -75,7 +77,7 @@ pytest
 ```
 
 ## Contributing
-Contributions are welcome! Feel free to fork the repository and submit a pull request.
+I'm not prepared to accept contributions at this time.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -83,3 +85,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 - [Flask](https://flask.palletsprojects.com)
 - [SQLAlchemy](https://www.sqlalchemy.org/)
+- [JetBrains' PyCharm with Junie](https://www.jetbrains.com/pycharm/)
