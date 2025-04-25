@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, send_file
+from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, \
+    send_file, current_app
 import os
 import subprocess
 import datetime
@@ -17,7 +18,7 @@ def index():
 
     # Get the list of backup files
     backup_files = []
-    backup_dir = os.path.join("files_db_backups")
+    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
     if os.path.exists(backup_dir):
         for file in os.listdir(backup_dir):
             if file.startswith("backup") and file.endswith(".sql"):
@@ -26,7 +27,7 @@ def index():
     # Get the list of PDF files from the files_roster_reports directory
     pdf_files = []
     # Check the files_roster_reports directory
-    pdfs_dir = os.path.join("files_roster_reports")
+    pdfs_dir = os.path.join(current_app.root_path, "files_roster_reports")
     if os.path.exists(pdfs_dir):
         for file in os.listdir(pdfs_dir):
             if file.endswith(".pdf"):
@@ -41,10 +42,10 @@ def backup_database():
     backup_filename = f"backup{timestamp}.sql"
 
     # Create the files_db_backups directory if it doesn't exist
-    backup_dir = os.path.join("files_db_backups")
+    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
     os.makedirs(backup_dir, exist_ok=True)
 
-    backup_path = os.path.join(backup_dir, backup_filename)
+    backup_path = os.path.join(current_app.root_path, backup_dir, backup_filename)
 
     try:
         # Execute the SQLite backup command exactly as specified
@@ -69,8 +70,8 @@ def view_file():
 
         if file_ext == '.pdf':
             # PDF files are in the files_roster_reports directory
-            if os.path.exists(os.path.join("files_roster_reports", filename)):
-                file_path = os.path.join("files_roster_reports", filename)
+            if os.path.exists(os.path.join(current_app.root_path, "files_roster_reports", filename)):
+                file_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
             else:
                 return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
 
@@ -80,14 +81,14 @@ def view_file():
 
         elif file_ext in ['.txt', '.sql']:
             # SQL backup files are in files_db_backups
-            if file_ext == '.sql' and os.path.exists(os.path.join("files_db_backups", filename)):
-                file_path = os.path.join("files_db_backups", filename)
+            if file_ext == '.sql' and os.path.exists(os.path.join(current_app.root_path, "files_db_backups", filename)):
+                file_path = os.path.join(current_app.root_path, "files_db_backups", filename)
                 # Return a URL for the client to open the SQL file in a new browser tab
                 file_url = url_for('main.serve_sql', filename=filename)
                 return jsonify({"success": True, "file_url": file_url})
             # Text files might be in instance/letter_template
-            elif file_ext == '.txt' and os.path.exists(os.path.join("instance", "letter_template", filename)):
-                file_path = os.path.join("instance", "letter_template", filename)
+            elif file_ext == '.txt' and os.path.exists(os.path.join(current_app.root_path, "instance", "letter_template", filename)):
+                file_path = os.path.join(current_app.root_path, "instance", "letter_template", filename)
                 # For now, still open text files with the default application
                 subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
             else:
@@ -106,7 +107,7 @@ def serve_pdf(filename):
     """
     Serve a PDF file directly to the browser.
     """
-    pdf_path = os.path.join("files_roster_reports", filename)
+    pdf_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {filename} not found.', 'danger')
@@ -123,7 +124,7 @@ def serve_sql(filename):
     """
     Serve an SQL file directly to the browser as a text file.
     """
-    sql_path = os.path.join("files_db_backups", filename)
+    sql_path = os.path.join(current_app.root_path, "files_db_backups", filename)
 
     if not os.path.exists(sql_path):
         flash(f'SQL file {filename} not found.', 'danger')
@@ -141,7 +142,7 @@ def view_pdf():
     View the selected PDF file directly in the browser.
     """
     # Check if the files_roster_reports directory exists and has PDF files
-    pdfs_dir = os.path.join("files_roster_reports")
+    pdfs_dir = os.path.join(current_app.root_path, "files_roster_reports")
     if not os.path.exists(pdfs_dir):
         flash('No PDF files found. The files_roster_reports directory does not exist.', 'info')
         return redirect(url_for('main.index'))
@@ -162,7 +163,7 @@ def view_pdf():
         flash(f'PDF file {pdf_file} is not in the files_roster_reports directory.', 'danger')
         return redirect(url_for('main.index'))
 
-    pdf_path = os.path.join("files_roster_reports", pdf_file)
+    pdf_path = os.path.join(current_app.root_path, "files_roster_reports", pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -181,7 +182,7 @@ def view_sql():
     View the selected SQL file directly in the browser as a text file.
     """
     # Check if the files_db_backups directory exists and has SQL files
-    backup_dir = os.path.join("files_db_backups")
+    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
     if not os.path.exists(backup_dir):
         flash('No SQL files found. The files_db_backups directory does not exist.', 'info')
         return redirect(url_for('main.index'))
@@ -197,7 +198,7 @@ def view_sql():
         flash('No SQL file selected.', 'danger')
         return redirect(url_for('main.index'))
 
-    sql_path = os.path.join("files_db_backups", sql_file)
+    sql_path = os.path.join(current_app.root_path, "files_db_backups", sql_file)
 
     if not os.path.exists(sql_path):
         flash(f'SQL file {sql_file} not found.', 'danger')
@@ -221,14 +222,14 @@ def restore_database():
         return jsonify({"success": False, "error": "No SQL file selected"}), 400
 
     # Check if the file exists
-    backup_dir = os.path.join("files_db_backups")
+    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
     sql_path = os.path.join(backup_dir, sql_file)
 
     if not os.path.exists(sql_path):
         return jsonify({"success": False, "error": f"SQL file {sql_file} not found"}), 404
 
     # Database path
-    db_path = os.path.join("instance", "clerk.sqlite3")
+    db_path = os.path.join(current_app.root_path, "instance", "clerk.sqlite3")
     temp_backup = f"{db_path}.bak"
     temp_new_db = f"{db_path}.new"
 
@@ -305,13 +306,13 @@ def delete_file():
 
         if file_ext == '.pdf':
             # PDF files are in the files_roster_reports directory
-            file_path = os.path.join("files_roster_reports", filename)
+            file_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
         elif file_ext == '.sql':
             # SQL backup files are in files_db_backups
-            file_path = os.path.join("files_db_backups", filename)
+            file_path = os.path.join(current_app.root_path, "files_db_backups", filename)
         elif file_ext == '.txt':
             # Text files are in instance/letter_template
-            file_path = os.path.join("instance", "letter_template", filename)
+            file_path = os.path.join(current_app.root_path, "instance", "letter_template", filename)
         else:
             return jsonify({"success": False, "error": f"Unsupported file type: {file_ext}"}), 400
 

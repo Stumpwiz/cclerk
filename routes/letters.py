@@ -127,7 +127,7 @@ def view_pdf():
         return redirect(url_for('letters.get_letters_html'))
 
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
-    pdf_path = os.path.join(files_letters_dir, pdf_file)
+    pdf_path = os.path.join(current_app.root_path, files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -153,7 +153,7 @@ def delete_pdf():
         return redirect(url_for('letters.get_letters_html'))
 
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
-    pdf_path = os.path.join(files_letters_dir, pdf_file)
+    pdf_path = os.path.join(current_app.root_path, files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -223,168 +223,51 @@ def generate_letter():
         temp_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
 
         try:
-            # Run xelatex to generate the PDF
-            xelatex_path = r"D:\texlive\texlive\2024\bin\windows\xelatex.exe"
-
-            # First run of xelatex
-            print(f"Running first xelatex pass...")
-            try:
-                result1 = subprocess.run(
-                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
-                print(f"First xelatex run completed successfully.")
-            except subprocess.CalledProcessError as e:
-                print(f"First xelatex run failed with return code: {e.returncode}")
-                # Only log errors in case of failure
-                if "! " in e.stdout.decode('utf-8', errors='replace'):
-                    error_lines = [line for line in e.stdout.decode('utf-8', errors='replace').split('\n') if
-                                   "! " in line]
-                    for error_line in error_lines:
-                        print(f"LaTeX error: {error_line.strip()}")
-                # Continue with the second run even if the first run fails
-                print("Continuing with second xelatex run despite first run failure")
-
-            # Second run of xelatex to resolve references
-            print(f"Running second xelatex pass...")
-            try:
-                result2 = subprocess.run(
-                    [xelatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
-                print(f"Second xelatex run completed successfully.")
-            except subprocess.CalledProcessError as e:
-                print(f"Second xelatex run failed with return code: {e.returncode}")
-                # Only log errors in case of failure
-                if "! " in e.stdout.decode('utf-8', errors='replace'):
-                    error_lines = [line for line in e.stdout.decode('utf-8', errors='replace').split('\n') if
-                                   "! " in line]
-                    for error_line in error_lines:
-                        print(f"LaTeX error: {error_line.strip()}")
-                # Continue even if the second run fails
-                print("Continuing despite second xelatex run failure")
+            # Run xelatex to generate the PDF using a simpler approach
+            # Use xelatex from the system PATH instead of hard-coding the path
+            print(f"Running xelatex...")
+            result = subprocess.run(
+                ["xelatex", "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
+                cwd=files_letters_dir,
+                capture_output=True,
+                text=True
+            )
 
             # Check if the PDF was generated
             if os.path.exists(temp_pdf_path):
                 print(f"PDF file generated successfully.")
             else:
-                print(f"Expected PDF file not found. Looking for alternatives...")
-                # If not found, look for any PDF file in the files_letters directory
-                pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
-                if pdf_files:
-                    # Use the first PDF file found
-                    temp_pdf_path = os.path.join(files_letters_dir, pdf_files[0])
-                    print(f"Using alternative PDF file: {os.path.basename(temp_pdf_path)}")
-                else:
-                    print("No PDF files found in the files_letters directory")
+                print(f"PDF file not generated. Check LaTeX logs for errors.")
+                if result.returncode != 0:
+                    print(f"xelatex failed with return code: {result.returncode}")
+                    # Extract error messages from output
+                    if "! " in result.stdout:
+                        error_lines = [line for line in result.stdout.split('\n') if "! " in line]
+                        for error_line in error_lines:
+                            print(f"LaTeX error: {error_line.strip()}")
 
-                    # Check for log files that might contain error information
-                    log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
-                    for log_file in log_files:
-                        log_path = os.path.join(files_letters_dir, log_file)
-                        try:
-                            with open(log_path, 'r', encoding='utf-8', errors='replace') as log:
-                                log_content = log.read()
-                                # Look for LaTeX errors in the log file
-                                if "! " in log_content:
-                                    error_lines = [line for line in log_content.split('\n') if "! " in line]
-                                    for error_line in error_lines:
-                                        print(f"LaTeX error in log: {error_line.strip()}")
-                        except Exception as log_error:
-                            print(f"Error reading log file: {log_error}")
-
-                    # Try running pdflatex as an alternative
-                    try:
-                        print("Trying pdflatex as an alternative...")
-                        pdflatex_path = r"D:\texlive\texlive\2024\bin\windows\pdflatex.exe"
-                        if os.path.exists(pdflatex_path):
-                            subprocess.run(
-                                [pdflatex_path, "-interaction=nonstopmode", "-output-directory", files_letters_dir,
-                                 tex_file_path],
-                                check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=files_letters_dir)
-
-                            # Check again for PDF files
-                            pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
-                            if pdf_files:
-                                temp_pdf_path = os.path.join(files_letters_dir, pdf_files[0])
-                                print(f"PDF generated using pdflatex.")
-                        else:
-                            print(f"pdflatex not found at {pdflatex_path}")
-                    except Exception as pdf_error:
-                        print(f"Error running pdflatex: {pdf_error}")
-
-            # Now check again if we have a PDF file to copy
+            # Now check if we have a PDF file
             if os.path.exists(temp_pdf_path):
-                # Check if the PDF file is valid (not empty)
-                temp_pdf_size = os.path.getsize(temp_pdf_path)
-                if temp_pdf_size == 0:
-                    print("Warning: PDF file is empty (0 bytes)")
-
-                # Ensure the destination directory exists
-                os.makedirs(os.path.dirname(final_pdf_path), exist_ok=True)
-
-                # Copy the PDF to the permanent location
-                print(f"Copying PDF to {os.path.basename(final_pdf_path)}...")
-                try:
-                    shutil.copy2(temp_pdf_path, final_pdf_path)
-                    if os.path.exists(final_pdf_path):
-                        print(f"PDF file successfully copied.")
-                    else:
-                        print(f"Failed to copy PDF file. Trying alternative methods...")
-                        # Try an alternative copy method
-                        try:
-                            shutil.copyfile(temp_pdf_path, final_pdf_path)
-                            if os.path.exists(final_pdf_path):
-                                print(f"PDF file copied using alternative method.")
-                        except Exception as copy_error:
-                            print(f"Alternative copy method failed: {copy_error}")
-
-                            # Try a third copy method using raw file operations
-                            try:
-                                with open(temp_pdf_path, 'rb') as src_file, open(final_pdf_path, 'wb') as dst_file:
-                                    dst_file.write(src_file.read())
-                                if os.path.exists(final_pdf_path):
-                                    print(f"PDF file copied using raw file operations.")
-                            except Exception as raw_copy_error:
-                                print(f"All copy methods failed: {raw_copy_error}")
-                except Exception as copy_error:
-                    print(f"Copy operation failed: {copy_error}")
-                    # Try alternative copy methods
-                    try:
-                        shutil.copyfile(temp_pdf_path, final_pdf_path)
-                        if os.path.exists(final_pdf_path):
-                            print(f"PDF file copied using alternative method.")
-                    except Exception as alt_copy_error:
-                        print(f"All copy methods failed: {alt_copy_error}")
-
                 # Success message without opening the PDF
                 flash(
                     f'Letter for {recipient} generated successfully! Use the buttons above to view, print, or delete the PDF.',
                     'success')
 
-                # Clean up LaTeX auxiliary files as well as the generated .tex file
-                try:
-                    print("Cleaning up LaTeX auxiliary files...")
-                    # List of LaTeX auxiliary file extensions to delete
-                    # aux_extensions = ['.tex', '.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
-                    #                   '.synctex.gz', '.dvi']
-                    aux_extensions = ['.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
-                                      '.synctex.gz', '.dvi']
-                    base_name = os.path.splitext(os.path.basename(tex_file_path))[0]
+                # Clean up LaTeX auxiliary files
+                print("Cleaning up LaTeX auxiliary files...")
+                aux_extensions = ['.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
+                                  '.synctex.gz', '.dvi']
 
-                    # Get all files in the files_letters directory
-                    for file in os.listdir(files_letters_dir):
-                        file_path = os.path.join(files_letters_dir, file)
-                        # Check if the file is a LaTeX auxiliary file
-                        if os.path.isfile(file_path) and any(file.endswith(ext) for ext in aux_extensions):
-                            try:
-                                os.remove(file_path)
-                                print(f"Deleted auxiliary file: {file}")
-                            except Exception as del_error:
-                                print(f"Error deleting auxiliary file {file}: {del_error}")
-                except Exception as cleanup_error:
-                    print(f"Error during cleanup of LaTeX auxiliary files: {cleanup_error}")
+                # Get all files in the files_letters directory
+                for file in os.listdir(files_letters_dir):
+                    file_path = os.path.join(files_letters_dir, file)
+                    # Check if the file is a LaTeX auxiliary file
+                    if os.path.isfile(file_path) and any(file.endswith(ext) for ext in aux_extensions):
+                        try:
+                            os.remove(file_path)
+                        except Exception as del_error:
+                            print(f"Error deleting auxiliary file {file}: {del_error}")
             else:
-                print("No PDF file found to copy. Checking for error information...")
-
                 # Check for log files that might contain error information
                 log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
                 for log_file in log_files:
@@ -397,8 +280,8 @@ def generate_letter():
                                 error_lines = [line for line in log_content.split('\n') if "! LaTeX Error:" in line]
                                 for error_line in error_lines:
                                     print(f"Found LaTeX error: {error_line}")
-                    except Exception as log_error:
-                        print(f"Error reading log file: {log_error}")
+                    except Exception:
+                        pass
 
                 flash('Failed to generate PDF. Please check the LaTeX template and server logs for more information.',
                       'danger')

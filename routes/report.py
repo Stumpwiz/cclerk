@@ -1,6 +1,6 @@
 # routes/report.py
 
-from flask import Blueprint
+from flask import Blueprint, current_app
 from models.report_record import ReportRecord
 from jinja2 import Environment, FileSystemLoader
 import subprocess
@@ -23,8 +23,8 @@ def long_form_roster():
 
     tex_filename = "long_form_roster.tex"
     pdf_filename = "long_form_roster.pdf"
-    tex_path = os.path.join(report_dir, tex_filename)
-    pdf_path = os.path.join(report_dir, pdf_filename)
+    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
+    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
 
     # Step 1: Query and sort all records
     records = ReportRecord.query.order_by(
@@ -105,8 +105,8 @@ def short_form_roster():
 
     tex_filename = "short_form_roster.tex"
     pdf_filename = "short_form_roster.pdf"
-    tex_path = os.path.join(report_dir, tex_filename)
-    pdf_path = os.path.join(report_dir, pdf_filename)
+    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
+    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
 
     # Step 1: Query and sort all records
     records = ReportRecord.query.order_by(
@@ -187,8 +187,8 @@ def expirations_report():
 
     tex_filename = "expirations_report.tex"
     pdf_filename = "expirations_report.pdf"
-    tex_path = os.path.join(report_dir, tex_filename)
-    pdf_path = os.path.join(report_dir, pdf_filename)
+    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
+    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
 
     # Determine current year for filter and title
     current_year = datetime.now().year
@@ -275,8 +275,8 @@ def vacancies_report():
 
     tex_filename = "vacancies_report.tex"
     pdf_filename = "vacancies_report.pdf"
-    tex_path = os.path.join(report_dir, tex_filename)
-    pdf_path = os.path.join(report_dir, pdf_filename)
+    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
+    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
 
     # Query and sort all records
     records = ReportRecord.query.filter(
