@@ -13,6 +13,11 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STATIC_PATH = os.path.join(BASE_DIR, "static")
 
+    # File paths
+    DB_PATH = os.path.join(INSTANCE_PATH, "clerk.sqlite3")
+    BACKUP_DIR = "files_db_backups"
+    REPORTS_DIR = "files_roster_reports"
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

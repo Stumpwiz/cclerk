@@ -1,11 +1,81 @@
 from flask import Blueprint, render_template, redirect, url_for, session, send_from_directory, jsonify, request, flash, \
-    send_file, current_app
+    current_app
 import os
 import subprocess
 import datetime
 import time
 import shutil
 from extensions import db
+from utils.file_handlers import get_file_path, validate_file_exists, serve_file, check_directory_for_files
+
+# Database restoration helper functions
+def backup_current_database(db_path, temp_backup):
+    """
+    Create a backup of the current database.
+    """
+    if os.path.exists(db_path):
+        if os.path.exists(temp_backup):
+            os.remove(temp_backup)
+        shutil.copy2(db_path, temp_backup)
+
+def create_empty_database(temp_new_db):
+    """
+    Create a new empty database file.
+    """
+    if os.path.exists(temp_new_db):
+        os.remove(temp_new_db)
+    open(temp_new_db, 'a').close()
+
+def restore_from_sql(temp_new_db, sql_path):
+    """
+    Restore from the SQL file to the new database.
+    """
+    command = f"sqlite3 {temp_new_db} < {sql_path}"
+    # On Windows, we need to use shell=True to handle the redirection
+    subprocess.run(command, shell=True, check=True)
+
+def replace_database(db_path, temp_new_db):
+    """
+    Replace the current database with the new one.
+    """
+    # First try to remove the current database
+    max_attempts = 5
+    for attempt in range(max_attempts):
+        try:
+            if os.path.exists(db_path):
+                os.remove(db_path)
+            break
+        except PermissionError:
+            if attempt < max_attempts - 1:
+                # Wait a bit and try again
+                time.sleep(0.5)
+            else:
+                raise
+
+    # Now move the new database to the correct location
+    shutil.move(temp_new_db, db_path)
+
+def cleanup_backup(temp_backup):
+    """
+    Clean up the temporary backup file.
+    """
+    if os.path.exists(temp_backup):
+        try:
+            os.remove(temp_backup)
+        except PermissionError:
+            # If we can't remove the backup, that's okay
+            pass
+
+def restore_backup_on_error(temp_backup, db_path):
+    """
+    Restore the original database from backup in case of error.
+    """
+    if os.path.exists(temp_backup) and not os.path.exists(db_path):
+        try:
+            shutil.copy2(temp_backup, db_path)
+        except Exception:
+            # If we can't restore the backup, there's nothing we can do
+            pass
 
 # Define a blueprint for main routes
 main_bp = Blueprint('main', __name__)
@@ -18,16 +88,16 @@ def index():
 
     # Get the list of backup files
     backup_files = []
-    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
+    backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
     if os.path.exists(backup_dir):
         for file in os.listdir(backup_dir):
             if file.startswith("backup") and file.endswith(".sql"):
                 backup_files.append(file)
 
-    # Get the list of PDF files from the files_roster_reports directory
+    # Get the list of PDF files from the reports directory
     pdf_files = []
-    # Check the files_roster_reports directory
-    pdfs_dir = os.path.join(current_app.root_path, "files_roster_reports")
+    # Check the reports directory
+    pdfs_dir = os.path.join(current_app.root_path, current_app.config['REPORTS_DIR'])
     if os.path.exists(pdfs_dir):
         for file in os.listdir(pdfs_dir):
             if file.endswith(".pdf"):
@@ -41,15 +111,16 @@ def backup_database():
     timestamp = datetime.datetime.now().strftime("%y%m%d%H%M%S")
     backup_filename = f"backup{timestamp}.sql"
 
-    # Create the files_db_backups directory if it doesn't exist
-    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
+    # Create the backup directory if it doesn't exist
+    backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
     os.makedirs(backup_dir, exist_ok=True)
 
-    backup_path = os.path.join(current_app.root_path, backup_dir, backup_filename)
+    backup_path = os.path.join(backup_dir, backup_filename)
 
     try:
-        # Execute the SQLite backup command exactly as specified
-        command = f"sqlite3 instance/clerk.sqlite3 .dump > {backup_path}"
+        # Execute the SQLite backup command
+        db_path = os.path.join(current_app.root_path, current_app.config['DB_PATH'])
+        command = f"sqlite3 {db_path} .dump > {backup_path}"
 
         # On Windows, we need to use shell=True to handle the redirection
         subprocess.run(command, shell=True, check=True)
@@ -62,42 +133,31 @@ def backup_database():
 def view_file():
     try:
         filename = request.json.get("filename")
-        if not filename:
-            return jsonify({"success": False, "error": "No filename provided"}), 400
+        valid, result = validate_file_exists(filename)
 
-        # Determine file type and location based on extension
+        if not valid:
+            return jsonify({"success": False, "error": result}), 400
+
+        file_path = result
         file_ext = os.path.splitext(filename)[1].lower()
 
         if file_ext == '.pdf':
-            # PDF files are in the files_roster_reports directory
-            if os.path.exists(os.path.join(current_app.root_path, "files_roster_reports", filename)):
-                file_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
-            else:
-                return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
-
             # Return a URL for the client to open the PDF in a new browser tab
             file_url = url_for('main.serve_pdf', filename=filename)
             return jsonify({"success": True, "file_url": file_url})
 
-        elif file_ext in ['.txt', '.sql']:
-            # SQL backup files are in files_db_backups
-            if file_ext == '.sql' and os.path.exists(os.path.join(current_app.root_path, "files_db_backups", filename)):
-                file_path = os.path.join(current_app.root_path, "files_db_backups", filename)
-                # Return a URL for the client to open the SQL file in a new browser tab
-                file_url = url_for('main.serve_sql', filename=filename)
-                return jsonify({"success": True, "file_url": file_url})
-            # Text files might be in instance/letter_template
-            elif file_ext == '.txt' and os.path.exists(os.path.join(current_app.root_path, "instance", "letter_template", filename)):
-                file_path = os.path.join(current_app.root_path, "instance", "letter_template", filename)
-                # For now, still open text files with the default application
-                subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
-            else:
-                return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
+        elif file_ext == '.sql':
+            # Return a URL for the client to open the SQL file in a new browser tab
+            file_url = url_for('main.serve_sql', filename=filename)
+            return jsonify({"success": True, "file_url": file_url})
+
+        elif file_ext == '.txt':
+            # For now, still open text files with the default application
+            subprocess.Popen(["cmd", "/c", "start", "", file_path], shell=True)
+            return jsonify({"success": True})
 
         else:
             return jsonify({"success": False, "error": f"Unsupported file type: {file_ext}"}), 400
-
-        return jsonify({"success": True})
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -107,16 +167,16 @@ def serve_pdf(filename):
     """
     Serve a PDF file directly to the browser.
     """
-    pdf_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
+    valid, result = validate_file_exists(filename)
 
-    if not os.path.exists(pdf_path):
-        flash(f'PDF file {filename} not found.', 'danger')
+    if not valid:
+        flash(result, 'danger')
         return redirect(url_for('main.index'))
 
     try:
-        return send_file(pdf_path, mimetype='application/pdf')
+        return serve_file(result, 'application/pdf')
     except Exception as e:
-        flash(f'Error opening PDF: {e}', 'danger')
+        flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/serve_sql/<filename>")
@@ -124,16 +184,16 @@ def serve_sql(filename):
     """
     Serve an SQL file directly to the browser as a text file.
     """
-    sql_path = os.path.join(current_app.root_path, "files_db_backups", filename)
+    valid, result = validate_file_exists(filename)
 
-    if not os.path.exists(sql_path):
-        flash(f'SQL file {filename} not found.', 'danger')
+    if not valid:
+        flash(result, 'danger')
         return redirect(url_for('main.index'))
 
     try:
-        return send_file(sql_path, mimetype='text/plain')
+        return serve_file(result, 'text/plain')
     except Exception as e:
-        flash(f'Error opening SQL file: {e}', 'danger')
+        flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/view_pdf", methods=["POST"])
@@ -141,17 +201,19 @@ def view_pdf():
     """
     View the selected PDF file directly in the browser.
     """
-    # Check if the files_roster_reports directory exists and has PDF files
-    pdfs_dir = os.path.join(current_app.root_path, "files_roster_reports")
-    if not os.path.exists(pdfs_dir):
-        flash('No PDF files found. The files_roster_reports directory does not exist.', 'info')
+    # Check if the reports directory exists and has PDF files
+    pdfs_dir = os.path.join(current_app.root_path, current_app.config['REPORTS_DIR'])
+    success, result = check_directory_for_files(
+        pdfs_dir, 
+        '.pdf', 
+        f'No PDF files found. The {current_app.config["REPORTS_DIR"]} directory does not exist.'
+    )
+
+    if not success:
+        flash(result, 'info')
         return redirect(url_for('main.index'))
 
-    # Check if there are any PDF files in the directory
-    pdf_files = [f for f in os.listdir(pdfs_dir) if f.endswith('.pdf')]
-    if not pdf_files:
-        flash('There are currently no files in the files_roster_reports directory.', 'info')
-        return redirect(url_for('main.index'))
+    pdf_files = result
 
     pdf_file = request.form.get('pdf_file')
     if not pdf_file:
@@ -160,20 +222,19 @@ def view_pdf():
 
     # Check if the requested file is actually in the list of PDF files in the directory
     if pdf_file not in pdf_files:
-        flash(f'PDF file {pdf_file} is not in the files_roster_reports directory.', 'danger')
+        flash(f'PDF file {pdf_file} is not in the {current_app.config["REPORTS_DIR"]} directory.', 'danger')
         return redirect(url_for('main.index'))
 
-    pdf_path = os.path.join(current_app.root_path, "files_roster_reports", pdf_file)
-
-    if not os.path.exists(pdf_path):
-        flash(f'PDF file {pdf_file} not found.', 'danger')
+    valid, result = validate_file_exists(pdf_file)
+    if not valid:
+        flash(result, 'danger')
         return redirect(url_for('main.index'))
 
     # Serve the PDF file directly to the browser
     try:
-        return send_file(pdf_path, mimetype='application/pdf')
+        return serve_file(result, 'application/pdf')
     except Exception as e:
-        flash(f'Error opening PDF: {e}', 'danger')
+        flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/view_sql", methods=["POST"])
@@ -181,34 +242,35 @@ def view_sql():
     """
     View the selected SQL file directly in the browser as a text file.
     """
-    # Check if the files_db_backups directory exists and has SQL files
-    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
-    if not os.path.exists(backup_dir):
-        flash('No SQL files found. The files_db_backups directory does not exist.', 'info')
+    # Check if the backup directory exists and has SQL files
+    backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
+    success, result = check_directory_for_files(
+        backup_dir, 
+        '.sql', 
+        f'No SQL files found. The {current_app.config["BACKUP_DIR"]} directory does not exist.'
+    )
+
+    if not success:
+        flash(result, 'info')
         return redirect(url_for('main.index'))
 
-    # Check if there are any SQL files in the directory
-    sql_files = [f for f in os.listdir(backup_dir) if f.endswith('.sql')]
-    if not sql_files:
-        flash('There are currently no files in the files_db_backups directory.', 'info')
-        return redirect(url_for('main.index'))
+    sql_files = result
 
     sql_file = request.form.get('sql_file')
     if not sql_file:
         flash('No SQL file selected.', 'danger')
         return redirect(url_for('main.index'))
 
-    sql_path = os.path.join(current_app.root_path, "files_db_backups", sql_file)
-
-    if not os.path.exists(sql_path):
-        flash(f'SQL file {sql_file} not found.', 'danger')
+    valid, result = validate_file_exists(sql_file)
+    if not valid:
+        flash(result, 'danger')
         return redirect(url_for('main.index'))
 
     # Serve the SQL file directly to the browser as a text file
     try:
-        return send_file(sql_path, mimetype='text/plain')
+        return serve_file(result, 'text/plain')
     except Exception as e:
-        flash(f'Error opening SQL file: {e}', 'danger')
+        flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
 @main_bp.route("/restore", methods=["POST"])
@@ -218,18 +280,15 @@ def restore_database():
     """
     # Get the selected SQL file from the request
     sql_file = request.json.get("filename")
-    if not sql_file:
-        return jsonify({"success": False, "error": "No SQL file selected"}), 400
+    valid, result = validate_file_exists(sql_file)
 
-    # Check if the file exists
-    backup_dir = os.path.join(current_app.root_path, "files_db_backups")
-    sql_path = os.path.join(backup_dir, sql_file)
+    if not valid:
+        return jsonify({"success": False, "error": result}), 400
 
-    if not os.path.exists(sql_path):
-        return jsonify({"success": False, "error": f"SQL file {sql_file} not found"}), 404
+    sql_path = result
 
     # Database path
-    db_path = os.path.join(current_app.root_path, "instance", "clerk.sqlite3")
+    db_path = os.path.join(current_app.root_path, current_app.config['DB_PATH'])
     temp_backup = f"{db_path}.bak"
     temp_new_db = f"{db_path}.new"
 
@@ -237,59 +296,25 @@ def restore_database():
         # Close all database connections
         db.engine.dispose()
 
-        # Create a new empty database file
-        if os.path.exists(temp_new_db):
-            os.remove(temp_new_db)
-        open(temp_new_db, 'a').close()
+        # Step 1: Create a new empty database file
+        create_empty_database(temp_new_db)
 
-        # Restore from the SQL file to the new database
-        command = f"sqlite3 {temp_new_db} < {sql_path}"
+        # Step 2: Restore from the SQL file to the new database
+        restore_from_sql(temp_new_db, sql_path)
 
-        # On Windows, we need to use shell=True to handle the redirection
-        subprocess.run(command, shell=True, check=True)
+        # Step 3: Create a backup of the current database
+        backup_current_database(db_path, temp_backup)
 
-        # Create a backup of the current database
-        # Use copy2 instead of rename to avoid file lock issues
-        if os.path.exists(db_path):
-            if os.path.exists(temp_backup):
-                os.remove(temp_backup)
-            shutil.copy2(db_path, temp_backup)
+        # Step 4: Replace the current database with the new one
+        replace_database(db_path, temp_new_db)
 
-        # Replace the current database with the new one
-        # First try to remove the current database
-        max_attempts = 5
-        for attempt in range(max_attempts):
-            try:
-                if os.path.exists(db_path):
-                    os.remove(db_path)
-                break
-            except PermissionError:
-                if attempt < max_attempts - 1:
-                    # Wait a bit and try again
-                    time.sleep(0.5)
-                else:
-                    raise
-
-        # Now move the new database to the correct location
-        shutil.move(temp_new_db, db_path)
-
-        # If successful, remove the temporary backup
-        if os.path.exists(temp_backup):
-            try:
-                os.remove(temp_backup)
-            except PermissionError:
-                # If we can't remove the backup, that's okay
-                pass
+        # Step 5: Clean up the temporary backup
+        cleanup_backup(temp_backup)
 
         return jsonify({"success": True, "message": f"Database restored successfully from {sql_file}"})
     except Exception as e:
         # If there was an error, try to restore the original database
-        if os.path.exists(temp_backup) and not os.path.exists(db_path):
-            try:
-                shutil.copy2(temp_backup, db_path)
-            except Exception:
-                # If we can't restore the backup, there's nothing we can do
-                pass
+        restore_backup_on_error(temp_backup, db_path)
 
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -297,27 +322,12 @@ def restore_database():
 def delete_file():
     try:
         filename = request.json.get("filename")
-        if not filename:
-            return jsonify({"success": False, "error": "No filename provided"}), 400
+        valid, result = validate_file_exists(filename)
 
-        # Determine file type and location based on extension
-        file_ext = os.path.splitext(filename)[1].lower()
-        file_path = None  # Initialize file_path to None
+        if not valid:
+            return jsonify({"success": False, "error": result}), 400
 
-        if file_ext == '.pdf':
-            # PDF files are in the files_roster_reports directory
-            file_path = os.path.join(current_app.root_path, "files_roster_reports", filename)
-        elif file_ext == '.sql':
-            # SQL backup files are in files_db_backups
-            file_path = os.path.join(current_app.root_path, "files_db_backups", filename)
-        elif file_ext == '.txt':
-            # Text files are in instance/letter_template
-            file_path = os.path.join(current_app.root_path, "instance", "letter_template", filename)
-        else:
-            return jsonify({"success": False, "error": f"Unsupported file type: {file_ext}"}), 400
-
-        if not file_path or not os.path.exists(file_path):
-            return jsonify({"success": False, "error": f"File not found: {filename}"}), 404
+        file_path = result
 
         # Delete the file
         os.remove(file_path)
