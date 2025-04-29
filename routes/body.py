@@ -2,12 +2,14 @@ from flask import Blueprint, jsonify, request, render_template, redirect, url_fo
 from models.body import Body
 from extensions import db
 from forms import CSRFForm
+from routes.decorators import handle_errors
 
 # Define a blueprint for the "body" feature
 body_bp = Blueprint('body', __name__)
 
 
 @body_bp.route('/get', methods=['GET'])
+@handle_errors
 def get_bodies():
     """Get all bodies or a specific body by ID"""
     body_id = request.args.get('id')
@@ -33,6 +35,7 @@ def get_bodies():
 
 
 @body_bp.route('/create', methods=['POST'])
+@handle_errors
 def create_body():
     """
     Create a new body.
@@ -62,6 +65,7 @@ def create_body():
 
 
 @body_bp.route('/update', methods=['PUT'])
+@handle_errors
 def update_body():
     """
     Update an existing body.
@@ -95,6 +99,7 @@ def update_body():
 
 
 @body_bp.route('/delete', methods=['DELETE'])
+@handle_errors
 def delete_body():
     """
     Delete a body.
@@ -117,6 +122,7 @@ def delete_body():
 
 
 @body_bp.route('/view', methods=['GET'])
+@handle_errors
 def view_bodies():
     """
     This route is for the web interface.
@@ -133,6 +139,7 @@ def view_bodies():
 
 
 @body_bp.route('/create_html', methods=['POST'])
+@handle_errors
 def create_body_html():
     """
     Create a new body from the web interface.
@@ -160,6 +167,7 @@ def create_body_html():
 
 
 @body_bp.route('/update_html', methods=['POST'])
+@handle_errors
 def update_body_html():
     """
     Update an existing body from the web interface.
@@ -190,6 +198,7 @@ def update_body_html():
 
 
 @body_bp.route('/delete_html', methods=['POST'])
+@handle_errors
 def delete_body_html():
     """
     Delete a body from the web interface.

@@ -8,6 +8,7 @@ import shutil
 from extensions import db
 from utils.file_handlers import get_file_path, validate_file_exists, serve_file, check_directory_for_files
 from forms import CSRFForm
+from routes.decorators import handle_errors
 
 # Database restoration helper functions
 def backup_current_database(db_path, temp_backup):
@@ -82,6 +83,7 @@ def restore_backup_on_error(temp_backup, db_path):
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route("/")
+@handle_errors
 def index():
     # Redirect to log in if the user is not authenticated
     if not session.get("user_id"):
@@ -110,6 +112,7 @@ def index():
     return render_template("home.html", items=[], backup_files=backup_files, pdf_files=pdf_files, form=form)
 
 @main_bp.route("/backup", methods=["POST"])
+@handle_errors
 def backup_database():
     # Create the timestamp for the backup filename exactly as specified
     timestamp = datetime.datetime.now().strftime("%y%m%d%H%M%S")
@@ -134,6 +137,7 @@ def backup_database():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @main_bp.route("/view_file", methods=["POST"])
+@handle_errors
 def view_file():
     try:
         filename = request.json.get("filename")
@@ -167,6 +171,7 @@ def view_file():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @main_bp.route("/serve_pdf/<filename>")
+@handle_errors
 def serve_pdf(filename):
     """
     Serve a PDF file directly to the browser.
@@ -184,6 +189,7 @@ def serve_pdf(filename):
         return redirect(url_for('main.index'))
 
 @main_bp.route("/serve_sql/<filename>")
+@handle_errors
 def serve_sql(filename):
     """
     Serve an SQL file directly to the browser as a text file.
@@ -201,6 +207,7 @@ def serve_sql(filename):
         return redirect(url_for('main.index'))
 
 @main_bp.route("/view_pdf", methods=["POST"])
+@handle_errors
 def view_pdf():
     """
     View the selected PDF file directly in the browser.
@@ -242,6 +249,7 @@ def view_pdf():
         return redirect(url_for('main.index'))
 
 @main_bp.route("/view_sql", methods=["POST"])
+@handle_errors
 def view_sql():
     """
     View the selected SQL file directly in the browser as a text file.
@@ -278,6 +286,7 @@ def view_sql():
         return redirect(url_for('main.index'))
 
 @main_bp.route("/restore", methods=["POST"])
+@handle_errors
 def restore_database():
     """
     Restore the database from a selected SQL backup file.
@@ -323,6 +332,7 @@ def restore_database():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @main_bp.route("/delete_file", methods=["POST"])
+@handle_errors
 def delete_file():
     try:
         filename = request.json.get("filename")
@@ -341,6 +351,7 @@ def delete_file():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @main_bp.route("/favicon.ico")
+@handle_errors
 def favicon():
     return send_from_directory(
         "static", "favicon.ico", mimetype="image/vnd.microsoft.icon"

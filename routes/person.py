@@ -2,12 +2,14 @@ from flask import Blueprint, jsonify, request, render_template
 from models.person import Person
 from extensions import db
 from sqlalchemy.exc import IntegrityError
+from routes.decorators import handle_errors
 
 # Define a blueprint for the "person" feature
 person_bp = Blueprint('person', __name__)
 
 
 @person_bp.route('/get', methods=['GET'])
+@handle_errors
 def get_persons():
     """Get all persons or a specific person by ID"""
     person_id = request.args.get('id')
@@ -37,6 +39,7 @@ def get_persons():
 
 
 @person_bp.route('/create', methods=['POST'])
+@handle_errors
 def create_person():
     """Create a new person"""
     data = request.json
@@ -71,6 +74,7 @@ def create_person():
 
 
 @person_bp.route('/update', methods=['PUT'])
+@handle_errors
 def update_person():
     """Update an existing person"""
     data = request.json
@@ -111,6 +115,7 @@ def update_person():
 
 
 @person_bp.route('/delete', methods=['DELETE'])
+@handle_errors
 def delete_person():
     """Delete a person"""
     person_id = request.args.get('id')
@@ -129,6 +134,7 @@ def delete_person():
 
 
 @person_bp.route('/view', methods=['GET'])
+@handle_errors
 def view_persons():
     """
     This route is for the web interface.

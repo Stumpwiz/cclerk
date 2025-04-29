@@ -6,6 +6,7 @@ import re
 from extensions import db
 from models.letters import LetterTemplate
 from forms import CSRFForm
+from routes.decorators import handle_errors
 
 
 def sanitize_latex(content):
@@ -43,6 +44,7 @@ letters_bp = Blueprint('letters', __name__)
 
 
 @letters_bp.route('/get', methods=['GET'])
+@handle_errors
 def get_letters():
     """
     This route handles both the API endpoint and the web interface.
@@ -54,6 +56,7 @@ def get_letters():
 
 
 @letters_bp.route('/', methods=['GET'])
+@handle_errors
 def get_letters_html():
     """
     This route is for the web interface.
@@ -80,6 +83,7 @@ def get_letters_html():
 
 
 @letters_bp.route('/update_template', methods=['POST'])
+@handle_errors
 def update_template():
     # Get the form data
     header = request.form.get('header')
@@ -101,6 +105,7 @@ def update_template():
 
 
 @letters_bp.route('/create_template', methods=['POST'])
+@handle_errors
 def create_template():
     # Check if a template already exists
     if not LetterTemplate.can_add_record():
@@ -121,6 +126,7 @@ def create_template():
 
 
 @letters_bp.route('/view_pdf', methods=['POST'])
+@handle_errors
 def view_pdf():
     """
     View the selected PDF file directly in the browser.
@@ -147,6 +153,7 @@ def view_pdf():
 
 
 @letters_bp.route('/delete_pdf', methods=['POST'])
+@handle_errors
 def delete_pdf():
     """
     Delete the selected PDF file.
@@ -174,6 +181,7 @@ def delete_pdf():
 
 
 @letters_bp.route('/generate_letter', methods=['POST'])
+@handle_errors
 def generate_letter():
     # Get the form data
     recipient = request.form.get('recipient')

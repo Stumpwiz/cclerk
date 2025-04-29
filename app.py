@@ -1,5 +1,5 @@
 import click
-from flask import Flask, current_app
+from flask import Flask, current_app, render_template
 from flask.cli import with_appcontext
 
 from config import Config
@@ -41,6 +41,15 @@ def create_app(test_config=None):
         """Clear the existing data and create new tables/views from schema.sql."""
         init_db()
         click.echo(f"Initialized test database from schema.sql at {current_app.config['DATABASE']}")
+
+    # Register error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template('errors/500.html'), 500
 
     return app
 

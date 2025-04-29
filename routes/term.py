@@ -4,12 +4,14 @@ from models.person import Person
 from models.office import Office
 from extensions import db
 from datetime import datetime
+from routes.decorators import handle_errors
 
 # Define a blueprint for the "term" feature
 term_bp = Blueprint('term', __name__)
 
 
 @term_bp.route('/get', methods=['GET'])
+@handle_errors
 def get_terms():
     """Get all terms, terms by person_id, or terms by office_id"""
     person_id = request.args.get('person_id')
@@ -52,6 +54,7 @@ def get_terms():
 
 
 @term_bp.route('/create', methods=['POST'])
+@handle_errors
 def create_term():
     """Create a new term"""
     data = request.json
@@ -117,6 +120,7 @@ def create_term():
 
 
 @term_bp.route('/update', methods=['PUT'])
+@handle_errors
 def update_term():
     """Update an existing term"""
     data = request.json
@@ -168,6 +172,7 @@ def update_term():
 
 
 @term_bp.route('/delete', methods=['DELETE'])
+@handle_errors
 def delete_term():
     """Delete a term"""
     person_id = request.args.get('person_id')
@@ -191,6 +196,7 @@ def delete_term():
 
 
 @term_bp.route('/view', methods=['GET'])
+@handle_errors
 def view_terms():
     """
     This route is for the web interface.

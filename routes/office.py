@@ -2,12 +2,14 @@ from flask import Blueprint, jsonify, request, render_template
 from models.office import Office
 from models.body import Body
 from extensions import db
+from routes.decorators import handle_errors
 
 # Define a blueprint for the "office" feature
 office_bp = Blueprint('office', __name__)
 
 
 @office_bp.route('/get', methods=['GET'])
+@handle_errors
 def get_offices():
     """Get all offices or a specific office by ID"""
     office_id = request.args.get('id')
@@ -40,6 +42,7 @@ def get_offices():
 
 
 @office_bp.route('/create', methods=['POST'])
+@handle_errors
 def create_office():
     """Create a new office"""
     data = request.json
@@ -71,6 +74,7 @@ def create_office():
 
 
 @office_bp.route('/update', methods=['PUT'])
+@handle_errors
 def update_office():
     """Update an existing office"""
     data = request.json
@@ -105,6 +109,7 @@ def update_office():
 
 
 @office_bp.route('/delete', methods=['DELETE'])
+@handle_errors
 def delete_office():
     """Delete an office"""
     office_id = request.args.get('id')
@@ -123,6 +128,7 @@ def delete_office():
 
 
 @office_bp.route('/view', methods=['GET'])
+@handle_errors
 def view_offices():
     """
     This route is for the web interface.

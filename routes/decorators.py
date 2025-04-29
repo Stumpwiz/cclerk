@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
 
 def role_required(required_role):
@@ -19,3 +19,19 @@ def role_required(required_role):
         return decorated_function
 
     return decorator
+
+
+def handle_errors(f):
+    """Decorator for standardized error handling across all routes."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            current_app.logger.error(f"Error in {f.__name__}: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": "Failed to process request",
+                "details": str(e)
+            }), 500
+    return decorated_function

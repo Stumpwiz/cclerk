@@ -4,12 +4,14 @@ from flask import Blueprint, current_app
 from models.report_record import ReportRecord
 from jinja2 import Environment, FileSystemLoader
 import subprocess
+from routes.decorators import handle_errors
 
 # Define the blueprint for all report-related routes
 report_bp = Blueprint("report", __name__, url_prefix="/report")
 
 
 @report_bp.route("/long")
+@handle_errors
 def long_form_roster():
     from datetime import datetime
     from collections import defaultdict
@@ -92,6 +94,7 @@ def long_form_roster():
 
 
 @report_bp.route("/short")
+@handle_errors
 def short_form_roster():
     from datetime import datetime
     from collections import defaultdict
@@ -174,6 +177,7 @@ def short_form_roster():
 
 
 @report_bp.route("/expirations")
+@handle_errors
 def expirations_report():
     from datetime import datetime
     from collections import defaultdict
@@ -262,6 +266,7 @@ def expirations_report():
 
 
 @report_bp.route("/vacancies")
+@handle_errors
 def vacancies_report():
     from datetime import datetime
     from collections import defaultdict
