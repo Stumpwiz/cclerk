@@ -3,7 +3,7 @@ from flask import Flask, current_app
 from flask.cli import with_appcontext
 
 from config import Config
-from extensions import db, migrate
+from extensions import db, migrate, csrf
 from routes import register_blueprints
 
 
@@ -25,6 +25,7 @@ def create_app(test_config=None):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    csrf.init_app(app)
 
     # Routes are now defined in blueprint files in the routes/ directory
     # - Main routes (/, /favicon.ico) are in routes/main_routes.py

@@ -33,6 +33,7 @@
                     </div>
                     <div class="card-body">
                         <form method="POST" action="{{ url_for('letters.generate_letter') }}">
+                            {{ form.csrf_token }}
                             <div class="mb-3">
                                 <label for="recipient" class="form-label">Recipient(s)</label>
                                 <input type="text" class="form-control" id="recipient" name="recipient" required>
@@ -97,11 +98,13 @@
                             </script>
                             <div class="d-flex justify-content-around mt-auto">
                                 <form method="POST" action="{{ url_for('letters.view_pdf') }}" target="_blank">
+                                    {{ form.csrf_token }}
                                     <input type="hidden" id="view_pdf_file" name="pdf_file"
                                            value="">
                                     <button type="submit" class="btn btn-primary">View</button>
                                 </form>
                                 <form method="POST" action="{{ url_for('letters.delete_pdf') }}">
+                                    {{ form.csrf_token }}
                                     <input type="hidden" id="delete_pdf_file" name="pdf_file"
                                            value="">
                                     <button type="submit" class="btn btn-danger"
@@ -162,6 +165,7 @@
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('letters.update_template') }}">
+                        {{ form.csrf_token }}
                         <div class="mb-3">
                             <label for="header" class="form-label">Header</label>
                             <textarea class="form-control" id="header" name="header" rows="5"
@@ -195,6 +199,7 @@
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="{{ url_for('letters.create_template') }}">
+                        {{ form.csrf_token }}
                         <div class="mb-3">
                             <label for="new_header" class="form-label">Header</label>
                             <textarea class="form-control" id="new_header" name="header" rows="5" required></textarea>

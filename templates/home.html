@@ -761,6 +761,7 @@
                                             <div class="col-6 mb-2">
                                                 <form method="POST" action="{{ url_for('main.view_pdf') }}"
                                                       target="_blank">
+                                                    {{ form.csrf_token }}
                                                     <input type="hidden" id="view_pdf_file" name="pdf_file" value="">
                                                     <button type="submit" id="btn_view_pdf"
                                                             class="btn btn-sm btn-primary w-100">View
@@ -816,6 +817,7 @@
                                             <div class="col-6 mb-2">
                                                 <form method="POST" action="{{ url_for('main.view_sql') }}"
                                                       target="_blank">
+                                                    {{ form.csrf_token }}
                                                     <input type="hidden" id="view_sql_file" name="sql_file" value="">
                                                     <button type="submit" id="btn_view_sql"
                                                             class="btn btn-sm btn-primary w-100">View

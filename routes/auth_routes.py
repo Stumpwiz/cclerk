@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models.user import User
+from forms import CSRFForm
 
 # Define a blueprint for authentication routes
 auth_bp = Blueprint('auth', __name__)
@@ -22,7 +23,8 @@ def login():
             return redirect(url_for("auth.login"))
 
     # Handle GET request to render the login form
-    return render_template("login.html")
+    form = CSRFForm()
+    return render_template("login.html", form=form)
 
 @auth_bp.route("/logout")
 def logout():

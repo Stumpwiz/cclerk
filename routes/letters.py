@@ -5,6 +5,7 @@ import shutil
 import re
 from extensions import db
 from models.letters import LetterTemplate
+from forms import CSRFForm
 
 
 def sanitize_latex(content):
@@ -70,9 +71,12 @@ def get_letters_html():
         pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
         pdf_files.sort()
 
+    # Create a CSRF form
+    form = CSRFForm()
+
     # Render the template with the letter template data and PDF files
     # No most_recent_pdf is passed to ensure no file is selected by default
-    return render_template("letters.html", template=template, pdf_files=pdf_files)
+    return render_template("letters.html", template=template, pdf_files=pdf_files, form=form)
 
 
 @letters_bp.route('/update_template', methods=['POST'])

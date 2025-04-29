@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request, render_template, redirect, url_for, flash
 from models.body import Body
 from extensions import db
+from forms import CSRFForm
 
 # Define a blueprint for the "body" feature
 body_bp = Blueprint('body', __name__)
@@ -124,8 +125,11 @@ def view_bodies():
     # Query all bodies ordered by name
     bodies = Body.query.order_by(Body.name).all()
 
-    # Render the template with the "bodies" data
-    return render_template("body.html", bodies=bodies)
+    # Create a CSRF form
+    form = CSRFForm()
+
+    # Render the template with the "bodies" data and the form
+    return render_template("body.html", bodies=bodies, form=form)
 
 
 @body_bp.route('/create_html', methods=['POST'])

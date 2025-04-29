@@ -7,6 +7,7 @@ import time
 import shutil
 from extensions import db
 from utils.file_handlers import get_file_path, validate_file_exists, serve_file, check_directory_for_files
+from forms import CSRFForm
 
 # Database restoration helper functions
 def backup_current_database(db_path, temp_backup):
@@ -103,7 +104,10 @@ def index():
             if file.endswith(".pdf"):
                 pdf_files.append(file)
 
-    return render_template("home.html", items=[], backup_files=backup_files, pdf_files=pdf_files)
+    # Create a CSRF form
+    form = CSRFForm()
+
+    return render_template("home.html", items=[], backup_files=backup_files, pdf_files=pdf_files, form=form)
 
 @main_bp.route("/backup", methods=["POST"])
 def backup_database():
