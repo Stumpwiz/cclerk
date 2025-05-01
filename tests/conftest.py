@@ -23,24 +23,66 @@ def app():
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{db_path}',
         'SECRET_KEY': 'test_secret_key',
         'WTF_CSRF_ENABLED': False,  # optional: if you use Flask-WTF
-        'DATABASE': db_path  # Add this for init_db to work
+        'DATABASE': db_path,  # Add this for init_db to work
+        'BACKUP_DIR': 'files_db_backups',  # Add these for the index route
+        'REPORTS_DIR': 'files_roster_reports'
     })
 
     with app.app_context():
         # Initialize the database schema
         from extensions import db
+        db.drop_all()  # Drop all tables first to ensure a clean state
         db.create_all()
 
-        # Initialize the database with schema.sql to create the report_record view
-        with sqlite3.connect(db_path) as conn:
-            with open('schema.sql', 'r', encoding='utf-16') as f:
-                conn.executescript(f.read())
+        # Initialize only the report_record view from schema.sql
+        try:
+            # Extract just the CREATE VIEW statement from schema.sql
+            view_sql = """
+CREATE VIEW report_record AS
+SELECT
+    person.personid AS person_id,
+    person.first AS first,
+    person.last AS last,
+    person.email AS email,
+    person.phone AS phone,
+    person.apt AS apt,
+    term.start AS start,
+    term.end AS end,
+    term.ordinal AS ordinal,
+    term.termpersonid AS term_person_id,
+    term.termofficeid AS term_office_id,
+    office.office_id AS office_id,
+    office.title AS title,
+    office.office_precedence AS office_precedence,
+    office.office_body_id AS office_body_id,
+    body.body_id AS body_id,
+    body.name AS name,
+    body.body_precedence AS body_precedence
+FROM term
+JOIN office ON office.office_id = term.termofficeid
+JOIN body ON body.body_id = office.office_body_id
+JOIN person ON person.personid = term.termpersonid
+ORDER BY body.body_precedence;
+"""
+            with sqlite3.connect(db_path) as conn:
+                conn.executescript(view_sql)
+        except Exception as e:
+            print(f"Error creating report_record view: {e}")
 
     yield app
 
     # Cleanup
-    os.close(db_fd)
-    os.unlink(db_path)
+    try:
+        # Ensure all database connections are closed
+        with app.app_context():
+            db.session.remove()
+            db.engine.dispose()
+
+        os.close(db_fd)
+        os.unlink(db_path)
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+        # If we can't delete the file now, it will be cleaned up by the OS later
 
 @pytest.fixture
 def client(app):
@@ -61,9 +103,9 @@ def authenticated_client(app, client):
         user = User(
             username='testuser',
             email='test@example.com',
-            password_hash=generate_password_hash('password'),
-            role='admin'
+            password='password'
         )
+        user.role = 'admin'  # Set role after creation
         db.session.add(user)
         db.session.commit()
 

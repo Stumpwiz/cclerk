@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} User{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">{{ action }} User</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" {% if action == 'Edit' %}action="{{ url_for('admin.edit_user', id=user_id) }}"{% endif %}>
+                {{ form.csrf_token }}
+                
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    {{ form.username(class="form-control", id="username") }}
+                    {% if form.username.errors %}
+                    <div class="text-danger">
+                        {% for error in form.username.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    {{ form.email(class="form-control", id="email") }}
+                    {% if form.email.errors %}
+                    <div class="text-danger">
+                        {% for error in form.email.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">
+                        Password
+                        {% if action == 'Edit' %}
+                        <small class="text-muted">(Leave blank to keep current password)</small>
+                        {% endif %}
+                    </label>
+                    {{ form.password(class="form-control", id="password") }}
+                    {% if form.password.errors %}
+                    <div class="text-danger">
+                        {% for error in form.password.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="confirm_password" class="form-label">Confirm Password</label>
+                    {{ form.confirm_password(class="form-control", id="confirm_password") }}
+                    {% if form.confirm_password.errors %}
+                    <div class="text-danger">
+                        {% for error in form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="role" class="form-label">Role</label>
+                    {{ form.role(class="form-select", id="role") }}
+                    {% if form.role.errors %}
+                    <div class="text-danger">
+                        {% for error in form.role.errors %}
+                        <small>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin.view_users') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ action }} User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,12 +8,25 @@ def role_required(required_role):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Extract the role from headers or authenticated user session
-            # This would depend on your authentication or role set-up
-            user_role = request.headers.get('X-Role', 'user')
+            from flask import session, flash, redirect, url_for
+            from models.user import User
 
-            if user_role != required_role:
-                return jsonify({'error': 'Unauthorized'}), 403
+            # Check if user is logged in
+            if 'user_id' not in session:
+                flash('Please log in to access this page', 'danger')
+                return redirect(url_for('auth.login'))
+
+            # Get user from database
+            user = User.query.get(session['user_id'])
+            if not user:
+                flash('User not found', 'danger')
+                return redirect(url_for('auth.login'))
+
+            # Check if user has the required role
+            if user.role != required_role:
+                flash('You do not have permission to access this page', 'danger')
+                return redirect(url_for('main.index'))
+
             return f(*args, **kwargs)
 
         return decorated_function

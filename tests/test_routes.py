@@ -3,6 +3,7 @@
 import pytest
 import json
 import os
+import tempfile
 from flask import url_for
 
 
@@ -19,8 +20,8 @@ def test_home_route_authenticated(authenticated_client):
     # Scenario 2: User IS authenticated
     response = authenticated_client.get("/")  # Simulate another GET request
     assert response.status_code == 200  # Check for a successful response
-    assert b"Generate Reports:" in response.data  # Check that the response's HTML contains expected content
-    assert b"Backup/Restore:" in response.data  # Check that the response's HTML contains expected content
+    assert b"Refresh and View Reports" in response.data  # Check that the response's HTML contains expected content
+    assert b"Backup/Restore Database" in response.data  # Check that the response's HTML contains expected content
 
 
 def test_login_route_get(client):
@@ -54,9 +55,9 @@ def test_login_route_post_valid(client, app):
         user = User(
             username='loginuser',
             email='login@example.com',
-            password_hash=generate_password_hash('password'),
-            role='admin'
+            password='password'
         )
+        user.role = 'admin'  # Set role after creation
         db.session.add(user)
         db.session.commit()
 
@@ -67,8 +68,8 @@ def test_login_route_post_valid(client, app):
     assert response.status_code == 200
 
     # Check that we're redirected to the home page
-    assert b"Generate Reports:" in response.data
-    assert b"Backup/Restore:" in response.data
+    assert b"Refresh and View Reports" in response.data
+    assert b"Backup/Restore Database" in response.data
 
 
 def test_logout_route(authenticated_client):
@@ -194,84 +195,71 @@ def test_report_routes(authenticated_client, test_data, app):
         "/report/vacancies"
     ]
 
-    # Get the absolute path to the report folder
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
+    # Create a temporary directory for testing
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create template files needed for testing in the temporary directory
+        template_files = {
+            "lfr_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
+            "sfr_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
+            "expirations_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
+            "vacancies_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}"
+        }
 
-    # Create the report directory if it doesn't exist
-    if not os.path.exists(report_dir):
-        os.makedirs(report_dir)
+        for filename, content in template_files.items():
+            with open(os.path.join(temp_dir, filename), "w", encoding="utf-8") as f:
+                f.write(content)
 
-    # Create template files needed for testing
-    template_files = {
-        "lfr_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
-        "sfr_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
-        "expirations_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}",
-        "vacancies_template.tex": "\\documentclass{article}\n\\begin{document}\n\\VAR{title}\n\\end{document}"
-    }
+        # Mock the app's config to use the temporary directory
+        original_reports_dir = app.config['REPORTS_DIR']
+        app.config['REPORTS_DIR'] = temp_dir
 
-    for filename, content in template_files.items():
-        with open(os.path.join(report_dir, filename), "w", encoding="utf-8") as f:
-            f.write(content)
+        # Mock the subprocess.run function to avoid actually running xelatex
+        import subprocess
+        original_run = subprocess.run
 
-    # Mock the subprocess.run function to avoid actually running xelatex
-    import subprocess
-    original_run = subprocess.run
+        def mock_run(*args, **kwargs):
+            # Create a mock PDF file
+            report_name = args[0][-1].split("\\")[-1].replace(".tex", ".pdf")
+            with open(os.path.join(temp_dir, report_name), "w") as f:
+                f.write("Mock PDF content")
 
-    def mock_run(*args, **kwargs):
-        # Create a mock PDF file
-        report_name = args[0][-1].split("\\")[-1].replace(".tex", ".pdf")
-        with open(os.path.join(report_dir, report_name), "w") as f:
-            f.write("Mock PDF content")
+            # Return a mock CompletedProcess object
+            class MockCompletedProcess:
+                def __init__(self):
+                    self.returncode = 0
+                    self.stdout = "Mock stdout"
+                    self.stderr = "Mock stderr"
 
-        # Return a mock CompletedProcess object
-        class MockCompletedProcess:
-            def __init__(self):
-                self.returncode = 0
-                self.stdout = "Mock stdout"
-                self.stderr = "Mock stderr"
+            return MockCompletedProcess()
 
-        return MockCompletedProcess()
+        # Replace subprocess.run with our mock function
+        subprocess.run = mock_run
 
-    # Replace subprocess.run with our mock function
-    subprocess.run = mock_run
+        try:
+            # Test each report route
+            for route in report_routes:
+                response = authenticated_client.get(route)
+                assert response.status_code == 200
+                json_data = response.get_json()
+                assert json_data.get("success") is True
+                assert "filename" in json_data
 
-    try:
-        # Test each report route
-        for route in report_routes:
-            response = authenticated_client.get(route)
-            assert response.status_code == 200
-            json_data = response.get_json()
-            assert json_data.get("success") is True
-            assert "filename" in json_data
+                # Check that the .tex file was created
+                tex_filename = json_data["filename"].replace(".pdf", ".tex")
+                tex_path = os.path.join(temp_dir, tex_filename)
+                assert os.path.exists(tex_path)
 
-            # Check that the .tex file was created
-            tex_filename = json_data["filename"].replace(".pdf", ".tex")
-            tex_path = os.path.join(report_dir, tex_filename)
-            assert os.path.exists(tex_path)
+                # Check the content of the .tex file
+                with open(tex_path, "r", encoding="utf-8") as f:
+                    tex_content = f.read()
+                    assert "\\documentclass{article}" in tex_content
+                    assert "\\begin{document}" in tex_content
+                    assert "\\end{document}" in tex_content
 
-            # Check the content of the .tex file
-            with open(tex_path, "r", encoding="utf-8") as f:
-                tex_content = f.read()
-                assert "\\documentclass{article}" in tex_content
-                assert "\\begin{document}" in tex_content
-                assert "\\end{document}" in tex_content
+        finally:
+            # Restore the original subprocess.run function
+            subprocess.run = original_run
+            # Restore the original reports directory
+            app.config['REPORTS_DIR'] = original_reports_dir
 
-    finally:
-        # Restore the original subprocess.run function
-        subprocess.run = original_run
-
-        # Clean up the template and generated files
-        for filename in template_files:
-            try:
-                os.remove(os.path.join(report_dir, filename))
-            except FileNotFoundError:
-                pass
-
-        for route in report_routes:
-            report_name = route.split("/")[-1]
-            for ext in [".tex", ".pdf", ".aux", ".log"]:
-                try:
-                    os.remove(os.path.join(report_dir, f"{report_name}{ext}"))
-                except FileNotFoundError:
-                    pass
+            # No need to clean up files as the temporary directory will be automatically deleted

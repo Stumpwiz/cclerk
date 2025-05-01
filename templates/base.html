@@ -20,6 +20,9 @@
                 <a class="nav-link" href="{{ url_for('office.view_offices') }}">Offices</a>
                 <a class="nav-link" href="{{ url_for('person.view_persons') }}">Persons</a>
                 <a class="nav-link" href="{{ url_for('term.view_terms') }}">Terms</a>
+                {% if g.user and g.user.role == 'admin' %}
+                <a class="nav-link" href="{{ url_for('admin.view_users') }}">Manage Users</a>
+                {% endif %}
                 <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
             {% else %}
                 <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>

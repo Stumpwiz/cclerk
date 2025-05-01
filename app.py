@@ -31,6 +31,17 @@ def create_app(test_config=None):
     # - Main routes (/, /favicon.ico) are in routes/main_routes.py
     # - Authentication routes (/login, /logout) are in routes/auth_routes.py
 
+    @app.before_request
+    def load_logged_in_user():
+        from flask import g, session
+        from models.user import User
+
+        user_id = session.get('user_id')
+        if user_id is None:
+            g.user = None
+        else:
+            g.user = User.query.get(user_id)
+
     with app.app_context():
         db.create_all()  # Create all tables (like the "users" table)
 
