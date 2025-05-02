@@ -6,6 +6,11 @@ from config import Config
 from extensions import db, migrate, csrf
 from routes import register_blueprints
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)

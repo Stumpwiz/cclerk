@@ -10,14 +10,17 @@
   config.py
   .env
   instance
-  static/*.jpg
   .DS_Store
   files_db_backups/*
   files_letters/*
   files_roster_reports/*
+  scripts/add_user.py
 
   # Logs
   *.log
 
   # Migrations
-  .migrations/
+  .migrations/*
+/SSL Server Test_ clerk.mrrc.online.pdf
+/qualysTest.png
+/security_recommendations.md
