@@ -107,7 +107,7 @@ class TestPersonModel:
     def test_create_person(self, app):
         """Test creating a Person."""
         with app.app_context():
-            person = Person(person_id=100, first='Test', last='Person', email='test@example.com', phone='123-456-7890', apt='101')
+            person = Person(person_id=100, first='Test', last='Person', email='test@example.com', phone='(123) 456-7890', apt='101')
             db.session.add(person)
             db.session.commit()
 
@@ -117,7 +117,7 @@ class TestPersonModel:
             assert retrieved_person.first == 'Test'
             assert retrieved_person.last == 'Person'
             assert retrieved_person.email == 'test@example.com'
-            assert retrieved_person.phone == '123-456-7890'
+            assert retrieved_person.phone == '(123) 456-7890'
             assert retrieved_person.apt == '101'
 
     def test_unique_constraint(self, app):
@@ -144,9 +144,10 @@ class TestTermModel:
     def test_create_term(self, app, test_data):
         """Test creating a Term."""
         with app.app_context():
+            # Use a different person-office combination to avoid unique constraint violation
             term = Term(
                 term_person_id=1, 
-                term_office_id=1, 
+                term_office_id=2, 
                 start=date(2023, 1, 1), 
                 end=date(2025, 12, 31), 
                 ordinal='4th'
@@ -155,7 +156,7 @@ class TestTermModel:
             db.session.commit()
 
             # Retrieve the term from the database
-            retrieved_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            retrieved_term = Term.query.filter_by(term_person_id=1, term_office_id=2).first()
             assert retrieved_term is not None
             assert retrieved_term.start == date(2023, 1, 1)
             assert retrieved_term.end == date(2025, 12, 31)
@@ -177,9 +178,20 @@ class TestTermModel:
     def test_term_foreign_key_constraints(self, app):
         """Test that the foreign key constraints are enforced for term_person_id and term_office_id."""
         with app.app_context():
-            # Try to create a term with non-existent person_id and office_id
-            term = Term(term_person_id=999, term_office_id=999, start=date(2023, 1, 1), end=date(2025, 12, 31))
-            db.session.add(term)
+            # Try to create a term with non-existent person_id
+            term1 = Term(term_person_id=999, term_office_id=1, start=date(2023, 1, 1), end=date(2025, 12, 31))
+            db.session.add(term1)
+
+            # This should raise an IntegrityError
+            with pytest.raises(IntegrityError):
+                db.session.commit()
+
+            # Rollback the session
+            db.session.rollback()
+
+            # Try to create a term with non-existent office_id
+            term2 = Term(term_person_id=1, term_office_id=999, start=date(2023, 1, 1), end=date(2025, 12, 31))
+            db.session.add(term2)
 
             # This should raise an IntegrityError
             with pytest.raises(IntegrityError):

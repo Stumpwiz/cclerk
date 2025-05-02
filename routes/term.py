@@ -4,7 +4,7 @@ from models.person import Person
 from models.office import Office
 from extensions import db
 from datetime import datetime
-from routes.decorators import handle_errors
+from routes.decorators import handle_errors, login_required
 
 # Define a blueprint for the "term" feature
 term_bp = Blueprint('term', __name__)
@@ -12,6 +12,7 @@ term_bp = Blueprint('term', __name__)
 
 @term_bp.route('/get', methods=['GET'])
 @handle_errors
+@login_required
 def get_terms():
     """Get all terms, terms by person_id, or terms by office_id"""
     person_id = request.args.get('person_id')
@@ -117,6 +118,77 @@ def create_term():
         "person_name": f"{new_term.person.first} {new_term.person.last}",
         "office_title": new_term.office.title
     }), 201
+
+
+@term_bp.route('/add', methods=['POST'])
+@handle_errors
+@login_required
+def add_term():
+    """
+    Create a new term with a standardized response format.
+    This route is for compatibility with the test suite.
+    """
+    data = request.json
+
+    if not data or 'term_person_id' not in data or 'term_office_id' not in data:
+        return jsonify({"success": False, "error": "Person ID and Office ID are required"}), 400
+
+    # Verify that the person exists
+    person = Person.query.get(data['term_person_id'])
+    if not person:
+        return jsonify({"success": False, "error": "Person not found"}), 404
+
+    # Verify that the office exists
+    office = Office.query.get(data['term_office_id'])
+    if not office:
+        return jsonify({"success": False, "error": "Office not found"}), 404
+
+    # Check if the term already exists
+    existing_term = Term.query.filter_by(
+        term_person_id=data['term_person_id'],
+        term_office_id=data['term_office_id']
+    ).first()
+
+    if existing_term:
+        return jsonify({"success": False, "error": "Term already exists for this person and office"}), 400
+
+    # Parse dates if provided
+    start_date = None
+    end_date = None
+
+    if 'start' in data and data['start']:
+        try:
+            start_date = datetime.fromisoformat(data['start'])
+        except ValueError:
+            return jsonify({"success": False, "error": "Invalid start date format. Use ISO format (YYYY-MM-DD)"}), 400
+
+    if 'end' in data and data['end']:
+        try:
+            end_date = datetime.fromisoformat(data['end'])
+        except ValueError:
+            return jsonify({"success": False, "error": "Invalid end date format. Use ISO format (YYYY-MM-DD)"}), 400
+
+    new_term = Term(
+        term_person_id=data['term_person_id'],
+        term_office_id=data['term_office_id'],
+        start=start_date,
+        end=end_date,
+        ordinal=data.get('ordinal')
+    )
+
+    db.session.add(new_term)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "person_id": new_term.term_person_id,
+        "office_id": new_term.term_office_id,
+        "start": new_term.start.isoformat() if new_term.start else None,
+        "end": new_term.end.isoformat() if new_term.end else None,
+        "ordinal": new_term.ordinal,
+        "person_name": f"{new_term.person.first} {new_term.person.last}",
+        "office_title": new_term.office.title
+    })
 
 
 @term_bp.route('/update', methods=['PUT'])

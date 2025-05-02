@@ -165,7 +165,7 @@ def test_post_routes(authenticated_client, test_data):
         "first": "New",
         "last": "Person",
         "email": "new@example.com",
-        "phone": "555-123-4567",
+        "phone": "(555) 123-4567",
         "apt": "404"
     })
     assert response.status_code == 200

@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from models.office import Office
 from models.body import Body
 from extensions import db
-from routes.decorators import handle_errors
+from routes.decorators import handle_errors, login_required
 
 # Define a blueprint for the "office" feature
 office_bp = Blueprint('office', __name__)
@@ -10,6 +10,7 @@ office_bp = Blueprint('office', __name__)
 
 @office_bp.route('/get', methods=['GET'])
 @handle_errors
+@login_required
 def get_offices():
     """Get all offices or a specific office by ID"""
     office_id = request.args.get('id')
@@ -71,6 +72,43 @@ def create_office():
         "body_id": new_office.office_body_id,
         "body_name": new_office.body.name
     }), 201
+
+
+@office_bp.route('/add', methods=['POST'])
+@handle_errors
+@login_required
+def add_office():
+    """
+    Create a new office with a standardized response format.
+    This route is for compatibility with the test suite.
+    """
+    data = request.json
+
+    if not data or 'title' not in data or 'office_body_id' not in data:
+        return jsonify({"success": False, "error": "Title and office_body_id are required"}), 400
+
+    # Verify that the body exists
+    body = Body.query.get(data['office_body_id'])
+    if not body:
+        return jsonify({"success": False, "error": "Body not found"}), 404
+
+    new_office = Office(
+        title=data['title'],
+        office_precedence=data.get('office_precedence', 0),
+        office_body_id=data['office_body_id']
+    )
+
+    db.session.add(new_office)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "id": new_office.office_id,
+        "title": new_office.title,
+        "precedence": new_office.office_precedence,
+        "body_id": new_office.office_body_id,
+        "body_name": new_office.body.name
+    })
 
 
 @office_bp.route('/update', methods=['PUT'])

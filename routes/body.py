@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template, redirect, url_fo
 from models.body import Body
 from extensions import db
 from forms import CSRFForm
-from routes.decorators import handle_errors
+from routes.decorators import handle_errors, login_required
 
 # Define a blueprint for the "body" feature
 body_bp = Blueprint('body', __name__)
@@ -10,6 +10,7 @@ body_bp = Blueprint('body', __name__)
 
 @body_bp.route('/get', methods=['GET'])
 @handle_errors
+@login_required
 def get_bodies():
     """Get all bodies or a specific body by ID"""
     body_id = request.args.get('id')
@@ -62,6 +63,37 @@ def create_body():
         "mission": new_body.mission,
         "precedence": new_body.body_precedence
     }), 201
+
+
+@body_bp.route('/add', methods=['POST'])
+@handle_errors
+@login_required
+def add_body():
+    """
+    Create a new body with a standardized response format.
+    This route is for compatibility with the test suite.
+    """
+    data = request.json
+
+    if not data or 'name' not in data:
+        return jsonify({"success": False, "error": "Name is required"}), 400
+
+    new_body = Body(
+        name=data['name'],
+        mission=data.get('mission'),
+        body_precedence=data.get('precedence', 0)
+    )
+
+    db.session.add(new_body)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "id": new_body.body_id,
+        "name": new_body.name,
+        "mission": new_body.mission,
+        "precedence": new_body.body_precedence
+    })
 
 
 @body_bp.route('/update', methods=['PUT'])

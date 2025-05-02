@@ -177,6 +177,77 @@ This is a test document to verify that LaTeX can be compiled to PDF.
 def test_all_report_templates(app, test_data):
     """Test all report templates."""
     with app.app_context():
+        # Ensure the report_record view is created and populated
+        import sqlite3
+        db_path = app.config['DATABASE']
+
+        # Recreate the report_record view
+        try:
+            # Extract just the CREATE VIEW statement from schema.sql
+            view_sql = """
+CREATE VIEW report_record AS
+SELECT
+    person.personid AS person_id,
+    person.first AS first,
+    person.last AS last,
+    person.email AS email,
+    person.phone AS phone,
+    person.apt AS apt,
+    term.start AS start,
+    term.end AS end,
+    term.ordinal AS ordinal,
+    term.termpersonid AS term_person_id,
+    term.termofficeid AS term_office_id,
+    office.office_id AS office_id,
+    office.title AS title,
+    office.office_precedence AS office_precedence,
+    office.office_body_id AS office_body_id,
+    body.body_id AS body_id,
+    body.name AS name,
+    body.body_precedence AS body_precedence
+FROM term
+JOIN office ON office.office_id = term.termofficeid
+JOIN body ON body.body_id = office.office_body_id
+JOIN person ON person.personid = term.termpersonid
+ORDER BY body.body_precedence;
+"""
+            # First, drop the view or table if it exists
+            with sqlite3.connect(db_path) as conn:
+                # Enable foreign key constraints
+                conn.execute("PRAGMA foreign_keys=ON")
+                try:
+                    # Try to drop it as a table first (if it was created as a table)
+                    conn.execute("DROP TABLE IF EXISTS report_record")
+                    conn.commit()
+                    print("Dropped report_record table")
+                except sqlite3.OperationalError as e:
+                    # If it's not a table, try to drop it as a view
+                    try:
+                        conn.execute("DROP VIEW IF EXISTS report_record")
+                        conn.commit()
+                        print("Dropped report_record view")
+                    except sqlite3.OperationalError as e:
+                        print(f"Error dropping report_record: {e}")
+
+            # Then create the view
+            with sqlite3.connect(db_path) as conn:
+                # Enable foreign key constraints
+                conn.execute("PRAGMA foreign_keys=ON")
+                conn.executescript(view_sql)
+                conn.commit()
+
+            # Verify the view was created by querying it
+            with sqlite3.connect(db_path) as conn:
+                # Enable foreign key constraints
+                conn.execute("PRAGMA foreign_keys=ON")
+                cursor = conn.execute("SELECT COUNT(*) FROM report_record;")
+                count = cursor.fetchone()[0]
+                print(f"report_record view created with {count} records")
+
+        except Exception as e:
+            print(f"Error creating report_record view: {e}")
+            raise  # Re-raise the exception to fail the test
+
         # Create a temporary directory for testing
         with tempfile.TemporaryDirectory() as temp_dir:
             # Define the templates to test
@@ -216,10 +287,16 @@ def test_all_report_templates(app, test_data):
                 ReportRecord.office_precedence
             ).all()
 
+            # Verify that we have records
+            assert len(records) > 0, "No records found in ReportRecord view"
+
             from collections import defaultdict
             grouped = defaultdict(list)
             for r in records:
                 grouped[r.name].append(r)
+
+            # Verify that we have grouped records
+            assert len(grouped) > 0, "No grouped records found"
 
             # Set up Jinja2 environment for LaTeX
             env = Environment(

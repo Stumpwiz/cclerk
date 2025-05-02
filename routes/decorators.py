@@ -2,6 +2,24 @@ from functools import wraps
 from flask import request, jsonify, current_app
 
 
+def login_required(f):
+    """Decorator to restrict access to logged in users."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from flask import session, flash, redirect, url_for
+
+        # Check if user is logged in
+        if 'user_id' not in session:
+            if request.is_json:
+                return jsonify({"error": "Authentication required"}), 401
+            flash('Please log in to access this page', 'danger')
+            return redirect(url_for('auth.login'))
+
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 def role_required(required_role):
     """Decorator to restrict access based on the user role."""
 
@@ -13,6 +31,8 @@ def role_required(required_role):
 
             # Check if user is logged in
             if 'user_id' not in session:
+                if request.is_json:
+                    return jsonify({"error": "Authentication required"}), 401
                 flash('Please log in to access this page', 'danger')
                 return redirect(url_for('auth.login'))
 

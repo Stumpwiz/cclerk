@@ -292,10 +292,14 @@
                 return;
             }
 
-            fetch('/api/person/create', {
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch('/api/person/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     first: first,
@@ -387,10 +391,14 @@
                 return;
             }
 
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             fetch('/api/person/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     id: personId,
@@ -441,8 +449,14 @@
         // Delete a person
         function deletePerson(personId) {
             if (confirm('Are you sure you want to delete this person?')) {
+                // Get the CSRF token from the meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 fetch(`/api/person/delete?id=${personId}`, {
                     method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
                 })
                 .then(response => response.json())
                 .then(() => {

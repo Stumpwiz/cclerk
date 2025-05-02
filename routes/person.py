@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from models.person import Person
 from extensions import db
 from sqlalchemy.exc import IntegrityError
-from routes.decorators import handle_errors
+from routes.decorators import handle_errors, login_required
 
 # Define a blueprint for the "person" feature
 person_bp = Blueprint('person', __name__)
@@ -10,6 +10,7 @@ person_bp = Blueprint('person', __name__)
 
 @person_bp.route('/get', methods=['GET'])
 @handle_errors
+@login_required
 def get_persons():
     """Get all persons or a specific person by ID"""
     person_id = request.args.get('id')
@@ -71,6 +72,46 @@ def create_person():
         if 'uix_person_first_last' in str(e):
             return jsonify({"error": "A person with this first and last name already exists"}), 400
         return jsonify({"error": "An error occurred while creating the person"}), 400
+
+
+@person_bp.route('/add', methods=['POST'])
+@handle_errors
+@login_required
+def add_person():
+    """
+    Create a new person with a standardized response format.
+    This route is for compatibility with the test suite.
+    """
+    data = request.json
+
+    if not data or 'last' not in data:
+        return jsonify({"success": False, "error": "Last name is required"}), 400
+
+    new_person = Person(
+        first=data.get('first'),
+        last=data['last'],
+        email=data.get('email'),
+        phone=data.get('phone'),
+        apt=data.get('apt')
+    )
+
+    db.session.add(new_person)
+    try:
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "id": new_person.person_id,
+            "first": new_person.first,
+            "last": new_person.last,
+            "email": new_person.email,
+            "phone": new_person.phone,
+            "apt": new_person.apt
+        })
+    except IntegrityError as e:
+        db.session.rollback()
+        if 'uix_person_first_last' in str(e):
+            return jsonify({"success": False, "error": "A person with this first and last name already exists"}), 400
+        return jsonify({"success": False, "error": "An error occurred while creating the person"}), 400
 
 
 @person_bp.route('/update', methods=['PUT'])
