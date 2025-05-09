@@ -26,3 +26,4 @@
 /security_recommendations.md
 /files_db_backups/
 *.sql
+/scripts/
