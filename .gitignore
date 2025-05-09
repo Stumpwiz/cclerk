@@ -14,7 +14,7 @@
   files_db_backups/*
   files_letters/*
   files_roster_reports/*
-  scripts/add_user.py
+
 
   # Logs
   *.log
