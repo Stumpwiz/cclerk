@@ -5,13 +5,6 @@ import re
 from models.letters import LetterTemplate
 from extensions import db
 
-def test_get_letters_api(authenticated_client):
-    """Test the GET /api/letters/get route."""
-    response = authenticated_client.get("/api/letters/get")
-    assert response.status_code == 200
-    json_data = response.get_json()
-    assert "message" in json_data
-    assert json_data["message"] == "This is the letters endpoint"
 
 def test_get_letters_html(authenticated_client):
     """Test the GET /api/letters/ route."""

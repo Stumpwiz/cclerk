@@ -53,6 +53,38 @@ def test_delete_body_api(authenticated_client, test_data, app):
         deleted_body = Body.query.get(body_id)
         assert deleted_body is None
 
+def test_delete_body_with_offices_api(authenticated_client, test_data, app):
+    """Test the DELETE /api/body/delete route when body has associated offices."""
+    # Create a body to delete
+    with app.app_context():
+        from models.office import Office
+
+        body = Body(name="Body with Offices", mission="Try to Delete Me", body_precedence=12.0)
+        db.session.add(body)
+        db.session.commit()
+        body_id = body.body_id
+
+        # Create an office associated with this body
+        office = Office(title="Test Office", office_precedence=1.0, office_body_id=body_id)
+        db.session.add(office)
+        db.session.commit()
+
+    # Try to delete the body
+    response = authenticated_client.delete(f"/api/body/delete?id={body_id}")
+
+    # Should fail with 400 status code
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert "error" in json_data
+    assert "Cannot delete body with associated offices" == json_data["error"]
+    assert "details" in json_data
+
+    # Check that the body was not deleted from the database
+    with app.app_context():
+        body = Body.query.get(body_id)
+        assert body is not None
+        assert body.name == "Body with Offices"
+
 def test_view_bodies(authenticated_client, test_data):
     """Test the GET /api/body/view route."""
     response = authenticated_client.get("/api/body/view")
@@ -151,3 +183,43 @@ def test_delete_body_html(authenticated_client, app):
     with app.app_context():
         deleted_body = Body.query.get(body_id)
         assert deleted_body is None
+
+def test_delete_body_with_offices_html(authenticated_client, app):
+    """Test the POST /api/body/delete_html route when body has associated offices."""
+    # Create a body to delete
+    with app.app_context():
+        from models.office import Office
+
+        body = Body(name="HTML Body with Offices", mission="Try to Delete Me via HTML", body_precedence=13.0)
+        db.session.add(body)
+        db.session.commit()
+        body_id = body.body_id
+
+        # Create an office associated with this body
+        office = Office(title="Test HTML Office", office_precedence=2.0, office_body_id=body_id)
+        db.session.add(office)
+        db.session.commit()
+
+    # Set up CSRF token
+    with authenticated_client.session_transaction() as session:
+        session['_csrf_token'] = 'test_csrf_token'
+
+    # Try to delete the body using the HTML form
+    response = authenticated_client.post("/api/body/delete_html", data={
+        "id": body_id,
+        "csrf_token": "test_csrf_token"
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+
+    # Check for the presence of an alert div that would contain the error flash message
+    assert b'<div class="alert alert-danger' in response.data
+    assert b'Cannot delete body' in response.data
+    assert b'HTML Body with Offices' in response.data
+    assert b'office(s) associated with it' in response.data
+
+    # Check that the body was not deleted from the database
+    with app.app_context():
+        body = Body.query.get(body_id)
+        assert body is not None
+        assert body.name == "HTML Body with Offices"

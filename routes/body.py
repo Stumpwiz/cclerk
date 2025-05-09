@@ -35,34 +35,6 @@ def get_bodies():
     } for body in bodies])
 
 
-@body_bp.route('/create', methods=['POST'])
-@handle_errors
-def create_body():
-    """
-    Create a new body.
-    This route handles API requests and returns JSON.
-    For web interface, use the create_body_html route.
-    """
-    data = request.json
-
-    if not data or 'name' not in data:
-        return jsonify({"error": "Name is required"}), 400
-
-    new_body = Body(
-        name=data['name'],
-        mission=data.get('mission'),
-        body_precedence=data.get('precedence', 0)
-    )
-
-    db.session.add(new_body)
-    db.session.commit()
-
-    return jsonify({
-        "id": new_body.body_id,
-        "name": new_body.name,
-        "mission": new_body.mission,
-        "precedence": new_body.body_precedence
-    }), 201
 
 
 @body_bp.route('/add', methods=['POST'])
@@ -73,6 +45,10 @@ def add_body():
     Create a new body with a standardized response format.
     This route is for compatibility with the test suite.
     """
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'name' not in data:
@@ -104,6 +80,10 @@ def update_body():
     This route handles API requests and returns JSON.
     For web interface, use the update_body_html route.
     """
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'id' not in data:
@@ -146,6 +126,15 @@ def delete_body():
     body = Body.query.get(body_id)
     if not body:
         return jsonify({"error": "Body not found"}), 404
+
+    # Check if there are any offices associated with this body
+    from models.office import Office
+    offices = Office.query.filter_by(office_body_id=body.body_id).all()
+    if offices:
+        return jsonify({
+            "error": "Cannot delete body with associated offices",
+            "details": f"This body has {len(offices)} office(s) associated with it. Please delete or reassign these offices first."
+        }), 400
 
     db.session.delete(body)
     db.session.commit()
@@ -245,6 +234,13 @@ def delete_body_html():
     body = Body.query.get(body_id)
     if not body:
         flash('Body not found', 'danger')
+        return redirect(url_for('body.view_bodies'))
+
+    # Check if there are any offices associated with this body
+    from models.office import Office
+    offices = Office.query.filter_by(office_body_id=body.body_id).all()
+    if offices:
+        flash(f'Cannot delete body "{body.name}" because it has {len(offices)} office(s) associated with it. Please delete or reassign these offices first.', 'danger')
         return redirect(url_for('body.view_bodies'))
 
     name = body.name

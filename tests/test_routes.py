@@ -151,7 +151,7 @@ def test_post_routes(authenticated_client, test_data):
     assert json_data.get("success") is True
 
     # Test creating a new office
-    response = authenticated_client.post("/api/office/add", json={
+    response = authenticated_client.post("/api/office/create", json={
         "title": "New Test Office",
         "office_precedence": 3.0,
         "office_body_id": 1

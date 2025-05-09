@@ -29,6 +29,7 @@ def get_terms():
                 "end": term.end.isoformat() if term.end else None,
                 "ordinal": term.ordinal,
                 "person_name": f"{term.person.first} {term.person.last}" if term.person else None,
+                "body_name": term.office.body.name if term.office and term.office.body else None,
                 "office_title": term.office.title if term.office else None
             })
         return jsonify({"error": "Term not found"}), 404
@@ -50,103 +51,50 @@ def get_terms():
         "end": term.end.isoformat() if term.end else None,
         "ordinal": term.ordinal,
         "person_name": f"{term.person.first} {term.person.last}" if term.person else None,
+        "body_name": term.office.body.name if term.office and term.office.body else None,
         "office_title": term.office.title if term.office else None
     } for term in terms])
 
 
-@term_bp.route('/create', methods=['POST'])
-@handle_errors
-def create_term():
-    """Create a new term"""
-    data = request.json
-
-    if not data or 'person_id' not in data or 'office_id' not in data:
-        return jsonify({"error": "Person ID and Office ID are required"}), 400
-
-    # Verify that the person exists
-    person = Person.query.get(data['person_id'])
-    if not person:
-        return jsonify({"error": "Person not found"}), 404
-
-    # Verify that the office exists
-    office = Office.query.get(data['office_id'])
-    if not office:
-        return jsonify({"error": "Office not found"}), 404
-
-    # Check if the term already exists
-    existing_term = Term.query.filter_by(
-        term_person_id=data['person_id'],
-        term_office_id=data['office_id']
-    ).first()
-
-    if existing_term:
-        return jsonify({"error": "Term already exists for this person and office"}), 400
-
-    # Parse dates if provided
-    start_date = None
-    end_date = None
-
-    if 'start' in data and data['start']:
-        try:
-            start_date = datetime.fromisoformat(data['start'])
-        except ValueError:
-            return jsonify({"error": "Invalid start date format. Use ISO format (YYYY-MM-DD)"}), 400
-
-    if 'end' in data and data['end']:
-        try:
-            end_date = datetime.fromisoformat(data['end'])
-        except ValueError:
-            return jsonify({"error": "Invalid end date format. Use ISO format (YYYY-MM-DD)"}), 400
-
-    new_term = Term(
-        term_person_id=data['person_id'],
-        term_office_id=data['office_id'],
-        start=start_date,
-        end=end_date,
-        ordinal=data.get('ordinal')
-    )
-
-    db.session.add(new_term)
-    db.session.commit()
-
-    return jsonify({
-        "person_id": new_term.term_person_id,
-        "office_id": new_term.term_office_id,
-        "start": new_term.start.isoformat() if new_term.start else None,
-        "end": new_term.end.isoformat() if new_term.end else None,
-        "ordinal": new_term.ordinal,
-        "person_name": f"{new_term.person.first} {new_term.person.last}",
-        "office_title": new_term.office.title
-    }), 201
 
 
 @term_bp.route('/add', methods=['POST'])
+@term_bp.route('/create', methods=['POST'])
 @handle_errors
 @login_required
 def add_term():
     """
     Create a new term with a standardized response format.
     This route is for compatibility with the test suite.
+    The '/create' route is added for compatibility with the frontend.
     """
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 400
+
     data = request.json
 
-    if not data or 'term_person_id' not in data or 'term_office_id' not in data:
+    # Handle both parameter naming conventions (frontend uses person_id, backend uses term_person_id)
+    term_person_id = data.get('term_person_id') or data.get('person_id')
+    term_office_id = data.get('term_office_id') or data.get('office_id')
+
+    if not data or not term_person_id or not term_office_id:
         return jsonify({"success": False, "error": "Person ID and Office ID are required"}), 400
 
     # Verify that the person exists
-    person = Person.query.get(data['term_person_id'])
+    person = Person.query.get(term_person_id)
     if not person:
         return jsonify({"success": False, "error": "Person not found"}), 404
 
     # Verify that the office exists
-    office = Office.query.get(data['term_office_id'])
+    office = Office.query.get(term_office_id)
     if not office:
         return jsonify({"success": False, "error": "Office not found"}), 404
 
     # Check if the term already exists
     existing_term = Term.query.filter_by(
-        term_person_id=data['term_person_id'],
-        term_office_id=data['term_office_id']
+        term_person_id=term_person_id,
+        term_office_id=term_office_id
     ).first()
 
     if existing_term:
@@ -169,8 +117,8 @@ def add_term():
             return jsonify({"success": False, "error": "Invalid end date format. Use ISO format (YYYY-MM-DD)"}), 400
 
     new_term = Term(
-        term_person_id=data['term_person_id'],
-        term_office_id=data['term_office_id'],
+        term_person_id=term_person_id,
+        term_office_id=term_office_id,
         start=start_date,
         end=end_date,
         ordinal=data.get('ordinal')
@@ -187,6 +135,7 @@ def add_term():
         "end": new_term.end.isoformat() if new_term.end else None,
         "ordinal": new_term.ordinal,
         "person_name": f"{new_term.person.first} {new_term.person.last}",
+        "body_name": new_term.office.body.name if new_term.office and new_term.office.body else None,
         "office_title": new_term.office.title
     })
 
@@ -195,6 +144,10 @@ def add_term():
 @handle_errors
 def update_term():
     """Update an existing term"""
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'person_id' not in data or 'office_id' not in data:
@@ -239,6 +192,7 @@ def update_term():
         "end": term.end.isoformat() if term.end else None,
         "ordinal": term.ordinal,
         "person_name": f"{term.person.first} {term.person.last}",
+        "body_name": term.office.body.name if term.office and term.office.body else None,
         "office_title": term.office.title
     })
 

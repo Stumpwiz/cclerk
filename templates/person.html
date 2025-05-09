@@ -458,11 +458,21 @@
                         'X-CSRFToken': csrfToken
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error + (data.details ? ': ' + data.details : ''));
+                        });
+                    }
+                    return response.json();
+                })
                 .then(() => {
                     fetchPersons();
                 })
-                .catch(error => console.error('Error deleting person:', error));
+                .catch(error => {
+                    alert(error.message || 'Error deleting person');
+                    console.error('Error deleting person:', error);
+                });
             }
         }
     </script>

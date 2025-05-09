@@ -3,6 +3,13 @@
 {% block content %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Check if CSRF token is set in meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            if (!csrfToken || csrfToken.trim() === '') {
+                console.error('CSRF token is empty or invalid');
+                alert('CSRF token is missing or invalid. Please refresh the page and try again.');
+            }
             // Set up report buttons to navigate to their respective routes
             document.getElementById('btn_long_form').addEventListener('click', function() {
                 // Disable the button to prevent multiple clicks
@@ -10,11 +17,15 @@
                 const originalText = this.innerHTML;
                 this.innerHTML = 'Generating...';
 
+                // Get CSRF token from meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 // Make AJAX request to generate the PDF
                 fetch('/report/long', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                 })
                 .then(response => response.json())
@@ -90,11 +101,15 @@
                 const originalText = this.innerHTML;
                 this.innerHTML = 'Generating...';
 
+                // Get CSRF token from meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 // Make AJAX request to generate the PDF
                 fetch('/report/short', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                 })
                 .then(response => response.json())
@@ -170,11 +185,15 @@
                 const originalText = this.innerHTML;
                 this.innerHTML = 'Generating...';
 
+                // Get CSRF token from meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 // Make AJAX request to generate the PDF
                 fetch('/report/vacancies', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                 })
                 .then(response => response.json())
@@ -250,11 +269,15 @@
                 const originalText = this.innerHTML;
                 this.innerHTML = 'Generating...';
 
+                // Get CSRF token from meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 // Make AJAX request to generate the PDF
                 fetch('/report/expirations', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                 })
                 .then(response => response.json())
@@ -345,11 +368,15 @@
                     this.disabled = true;
                     this.innerHTML = 'Backing up...';
 
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                     // Make AJAX request to backup endpoint
                     fetch('/backup', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
                         },
                     })
                         .then(response => response.json())
@@ -420,11 +447,15 @@
                     this.disabled = true;
                     this.innerHTML = 'Restoring...';
 
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                     // Make AJAX request to restore endpoint
                     fetch('/restore', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             filename: selectedFile.textContent.trim()
@@ -439,8 +470,11 @@
                             if (data.success) {
                                 // Show the success message
                                 alert('Database restored successfully from: ' + selectedFile.textContent.trim());
+                            } else if (data.scheduled) {
+                                // Show a message about the scheduled restore
+                                alert(data.error + '\n\n' + data.message + '\n\nThe database will be automatically restored when the server is restarted.');
                             } else {
-                                // Show the error message
+                                // Show the general error message
                                 alert('Restore failed: ' + data.error);
                             }
                         })
@@ -558,17 +592,54 @@
                     const originalText = this.innerHTML;
                     this.innerHTML = 'Deleting...';
 
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Check if CSRF token is valid
+                    if (!csrfToken || csrfToken.trim() === '') {
+                        console.error('CSRF token is empty or invalid');
+                        alert('CSRF token is missing or invalid. Please refresh the page and try again.');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        return;
+                    }
+
                     // Make AJAX request to delete_file endpoint
                     fetch('/delete_file', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             filename: selectedFile.textContent.trim()
-                        })
+                        }),
+                        credentials: 'same-origin'
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            // Always try to parse the response as text first
+                            return response.text().then(text => {
+                                // Try to parse the text as JSON
+                                try {
+                                    const data = JSON.parse(text);
+
+                                    // If parsing succeeds, check if the response was ok
+                                    if (!response.ok) {
+                                        throw new Error(data.error || data.details || 'Server returned an error');
+                                    }
+                                    return data;
+                                } catch (e) {
+                                    // If JSON parsing fails, check if it's HTML
+                                    if (text.includes('<!doctype') || text.includes('<html')) {
+                                        throw new Error('Server returned an HTML page instead of JSON. Please check your CSRF token.');
+                                    }
+                                    // If it's not HTML, just return the text as the error
+                                    throw new Error(text || 'Unknown error');
+                                }
+                            });
+                        })
                         .then(data => {
                             // Re-enable button
                             this.disabled = false;
@@ -658,17 +729,54 @@
                     const originalText = this.innerHTML;
                     this.innerHTML = 'Deleting...';
 
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Check if CSRF token is valid
+                    if (!csrfToken || csrfToken.trim() === '') {
+                        console.error('CSRF token is empty or invalid');
+                        alert('CSRF token is missing or invalid. Please refresh the page and try again.');
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        return;
+                    }
+
                     // Make AJAX request to delete_file endpoint
                     fetch('/delete_file', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrfToken
                         },
                         body: JSON.stringify({
                             filename: selectedFile.textContent.trim()
-                        })
+                        }),
+                        credentials: 'same-origin'
                     })
-                        .then(response => response.json())
+                        .then(response => {
+                            // Always try to parse the response as text first
+                            return response.text().then(text => {
+                                // Try to parse the text as JSON
+                                try {
+                                    const data = JSON.parse(text);
+
+                                    // If parsing succeeds, check if the response was ok
+                                    if (!response.ok) {
+                                        throw new Error(data.error || data.details || 'Server returned an error');
+                                    }
+                                    return data;
+                                } catch (e) {
+                                    // If JSON parsing fails, check if it's HTML
+                                    if (text.includes('<!doctype') || text.includes('<html')) {
+                                        throw new Error('Server returned an HTML page instead of JSON. Please check your CSRF token.');
+                                    }
+                                    // If it's not HTML, just return the text as the error
+                                    throw new Error(text || 'Unknown error');
+                                }
+                            });
+                        })
                         .then(data => {
                             // Re-enable button
                             this.disabled = false;

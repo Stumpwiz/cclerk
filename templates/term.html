@@ -45,6 +45,7 @@
                         <thead>
                             <tr>
                                 <th>Person</th>
+                                <th>Body</th>
                                 <th>Office</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
@@ -372,6 +373,7 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${term.person_name || ''}</td>
+                    <td>${term.body_name || ''}</td>
                     <td>${term.office_title || ''}</td>
                     <td>${term.start || ''}</td>
                     <td>${term.end || ''}</td>
@@ -462,10 +464,14 @@
             const end = document.getElementById('end').value;
             const ordinal = document.getElementById('ordinal').value;
 
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             fetch('/api/term/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     person_id: personId,
@@ -493,10 +499,14 @@
             const end = document.getElementById('editEnd').value;
             const ordinal = document.getElementById('editOrdinal').value;
 
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             fetch('/api/term/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     person_id: personId,
@@ -518,8 +528,14 @@
         // Delete a term
         function deleteTerm(personId, officeId) {
             if (confirm('Are you sure you want to delete this term?')) {
+                // Get the CSRF token from the meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 fetch(`/api/term/delete?person_id=${personId}&office_id=${officeId}`, {
                     method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
                 })
                 .then(response => response.json())
                 .then(() => {

@@ -42,60 +42,42 @@ def get_offices():
     } for office in offices])
 
 
-@office_bp.route('/create', methods=['POST'])
-@handle_errors
-def create_office():
-    """Create a new office"""
-    data = request.json
-
-    if not data or 'title' not in data or 'body_id' not in data:
-        return jsonify({"error": "Title and body_id are required"}), 400
-
-    # Verify that the body exists
-    body = Body.query.get(data['body_id'])
-    if not body:
-        return jsonify({"error": "Body not found"}), 404
-
-    new_office = Office(
-        title=data['title'],
-        office_precedence=data.get('precedence'),
-        office_body_id=data['body_id']
-    )
-
-    db.session.add(new_office)
-    db.session.commit()
-
-    return jsonify({
-        "id": new_office.office_id,
-        "title": new_office.title,
-        "precedence": new_office.office_precedence,
-        "body_id": new_office.office_body_id,
-        "body_name": new_office.body.name
-    }), 201
 
 
-@office_bp.route('/add', methods=['POST'])
+@office_bp.route('/create', methods=['POST'])  # Primary route used by the frontend
+@office_bp.route('/add', methods=['POST'])  # Kept for backward compatibility
 @handle_errors
 @login_required
 def add_office():
     """
     Create a new office with a standardized response format.
-    This route is for compatibility with the test suite.
+    The '/create' route is the primary route used by the frontend.
+    The '/add' route is kept for backward compatibility.
     """
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 400
+
     data = request.json
 
-    if not data or 'title' not in data or 'office_body_id' not in data:
-        return jsonify({"success": False, "error": "Title and office_body_id are required"}), 400
+    if not data or 'title' not in data or ('body_id' not in data and 'office_body_id' not in data):
+        return jsonify({"success": False, "error": "Title and body_id are required"}), 400
+
+    # Get the body_id from either 'body_id' or 'office_body_id' parameter
+    body_id = data.get('body_id') or data.get('office_body_id')
 
     # Verify that the body exists
-    body = Body.query.get(data['office_body_id'])
+    body = Body.query.get(body_id)
     if not body:
         return jsonify({"success": False, "error": "Body not found"}), 404
 
+    # Get precedence from either 'precedence' or 'office_precedence' parameter
+    precedence = data.get('precedence', data.get('office_precedence', 0))
+
     new_office = Office(
         title=data['title'],
-        office_precedence=data.get('office_precedence', 0),
-        office_body_id=data['office_body_id']
+        office_precedence=precedence,
+        office_body_id=body_id
     )
 
     db.session.add(new_office)
@@ -115,6 +97,10 @@ def add_office():
 @handle_errors
 def update_office():
     """Update an existing office"""
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'id' not in data:

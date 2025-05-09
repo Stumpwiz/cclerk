@@ -39,41 +39,6 @@ def get_persons():
     } for person in persons])
 
 
-@person_bp.route('/create', methods=['POST'])
-@handle_errors
-def create_person():
-    """Create a new person"""
-    data = request.json
-
-    if not data or 'last' not in data:
-        return jsonify({"error": "Last name is required"}), 400
-
-    new_person = Person(
-        first=data.get('first'),
-        last=data['last'],
-        email=data.get('email'),
-        phone=data.get('phone'),
-        apt=data.get('apt')
-    )
-
-    db.session.add(new_person)
-    try:
-        db.session.commit()
-        return jsonify({
-            "id": new_person.person_id,
-            "first": new_person.first,
-            "last": new_person.last,
-            "email": new_person.email,
-            "phone": new_person.phone,
-            "apt": new_person.apt
-        }), 201
-    except IntegrityError as e:
-        db.session.rollback()
-        if 'uix_person_first_last' in str(e):
-            return jsonify({"error": "A person with this first and last name already exists"}), 400
-        return jsonify({"error": "An error occurred while creating the person"}), 400
-
-
 @person_bp.route('/add', methods=['POST'])
 @handle_errors
 @login_required
@@ -82,6 +47,10 @@ def add_person():
     Create a new person with a standardized response format.
     This route is for compatibility with the test suite.
     """
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"success": False, "error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'last' not in data:
@@ -118,6 +87,10 @@ def add_person():
 @handle_errors
 def update_person():
     """Update an existing person"""
+    # Check if request contains valid JSON data
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
     data = request.json
 
     if not data or 'id' not in data:
@@ -167,6 +140,13 @@ def delete_person():
     person = Person.query.get(person_id)
     if not person:
         return jsonify({"error": "Person not found"}), 404
+
+    # Check if there are any terms associated with this person
+    if person.terms:
+        return jsonify({
+            "error": "Cannot delete person with associated terms",
+            "details": f"This person has {len(person.terms)} term(s) associated with them. Please delete or modify these terms first."
+        }), 400
 
     db.session.delete(person)
     db.session.commit()

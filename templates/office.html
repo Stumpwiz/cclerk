@@ -146,11 +146,11 @@
 
         // Fetch and display all bodies when the page loads
         document.addEventListener('DOMContentLoaded', function () {
-            fetchBodies();
+            fetchBodies(); // No specific body to select on initial load
         });
 
         // Function to fetch all bodies from the API
-        function fetchBodies() {
+        function fetchBodies(bodyIdToSelect) {
             fetch('/api/body/get')
                 .then(response => response.json())
                 .then(bodies => {
@@ -164,6 +164,9 @@
                     // Populate body dropdown in edit form
                     const editBodyIdSelect = document.getElementById('editBodyId');
                     editBodyIdSelect.innerHTML = '<option value="">Select a Body</option>';
+
+                    // Keep track if we found the body to select
+                    let foundBodyToSelect = false;
 
                     bodies.forEach((body, index) => {
                         // Add to the "bodies" list
@@ -182,11 +185,24 @@
                         editOption.textContent = body.name;
                         editBodyIdSelect.appendChild(editOption);
 
-                        // Select the first body by default
-                        if (index === 0) {
-                            selectBody(body.id, body.name);
+                        // If this is the body we want to select, mark it as found
+                        if (bodyIdToSelect && body.id == bodyIdToSelect) {
+                            foundBodyToSelect = true;
                         }
                     });
+
+                    // Select the appropriate body
+                    if (bodyIdToSelect && foundBodyToSelect) {
+                        // Find the body name for the selected ID
+                        const selectedBody = bodies.find(body => body.id == bodyIdToSelect);
+                        if (selectedBody) {
+                            selectBody(bodyIdToSelect, selectedBody.name);
+                        }
+                    } else if (bodies.length > 0) {
+                        // If no body ID was specified or the specified body wasn't found,
+                        // select the first body by default
+                        selectBody(bodies[0].id, bodies[0].name);
+                    }
                 })
                 .catch(error => console.error('Error fetching bodies:', error));
         }
@@ -313,10 +329,14 @@
             const bodyId = document.getElementById('bodyId').value || selectedBodyId;
             const precedence = document.getElementById('precedence').value;
 
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             fetch('/api/office/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     title: title,
@@ -330,7 +350,8 @@
                     modal.hide();
                     document.getElementById('createOfficeForm').reset();
 
-                    // Refresh the "offices" list for the selected body
+                    // Refresh both the bodies list and the offices list for the selected body
+                    fetchBodies(selectedBodyId);
                     fetchOfficesForBody(selectedBodyId);
                 })
                 .catch(error => console.error('Error creating office:', error));
@@ -347,10 +368,14 @@
             const bodyId = document.getElementById('editBodyId').value;
             const precedence = document.getElementById('editPrecedence').value;
 
+            // Get the CSRF token from the meta tag
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
             fetch('/api/office/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify({
                     id: officeId,
@@ -364,7 +389,8 @@
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
                     modal.hide();
 
-                    // Refresh the "offices" list for the selected body
+                    // Refresh both the bodies list and the offices list for the selected body
+                    fetchBodies(selectedBodyId);
                     fetchOfficesForBody(selectedBodyId);
                 })
                 .catch(error => console.error('Error updating office:', error));
@@ -373,12 +399,19 @@
         // Delete an office
         function deleteOffice(officeId) {
             if (confirm('Are you sure you want to delete this office?')) {
+                // Get the CSRF token from the meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
                 fetch(`/api/office/delete?id=${officeId}`, {
                     method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    }
                 })
                     .then(response => response.json())
                     .then(() => {
-                        // Refresh the "offices" list for the selected body
+                        // Refresh both the bodies list and the offices list for the selected body
+                        fetchBodies(selectedBodyId);
                         fetchOfficesForBody(selectedBodyId);
                     })
                     .catch(error => console.error('Error deleting office:', error));

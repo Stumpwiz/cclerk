@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 import os
 import subprocess
-import shutil
 import re
 from extensions import db
 from models.letters import LetterTemplate
@@ -41,18 +40,6 @@ def sanitize_latex(content):
 
 # Define a blueprint for the "letters" feature
 letters_bp = Blueprint('letters', __name__)
-
-
-@letters_bp.route('/get', methods=['GET'])
-@handle_errors
-def get_letters():
-    """
-    This route handles both the API endpoint and the web interface.
-    When accessed via /api/letters/get, it returns JSON.
-    When accessed via a web browser, it renders the template.
-    """
-    # Return JSON for API requests (when accessed via /api/letters/get)
-    return jsonify({"message": "This is the letters endpoint"})
 
 
 @letters_bp.route('/', methods=['GET'])
@@ -220,7 +207,7 @@ def generate_letter():
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
     if not os.path.exists(files_letters_dir):
         os.makedirs(files_letters_dir, exist_ok=True)
-        print(f"Created files_letters directory: {files_letters_dir}")
+        # print(f"Created files_letters directory: {files_letters_dir}")
 
     # Path to the final PDF file
     final_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
@@ -237,7 +224,7 @@ def generate_letter():
         try:
             # Run xelatex to generate the PDF using a simpler approach
             # Use xelatex from the system PATH instead of hard-coding the path
-            print(f"Running xelatex...")
+            # print(f"Running xelatex...")
             result = subprocess.run(
                 ["xelatex", "-interaction=nonstopmode", "-output-directory", files_letters_dir, tex_file_path],
                 cwd=files_letters_dir,
@@ -247,16 +234,17 @@ def generate_letter():
 
             # Check if the PDF was generated
             if os.path.exists(temp_pdf_path):
-                print(f"PDF file generated successfully.")
+                # print(f"PDF file generated successfully.")
+                pass
             else:
-                print(f"PDF file not generated. Check LaTeX logs for errors.")
+                current_app.logger.error("PDF file not generated. Check LaTeX logs for errors.")
                 if result.returncode != 0:
-                    print(f"xelatex failed with return code: {result.returncode}")
+                    current_app.logger.error(f"xelatex failed with return code: {result.returncode}")
                     # Extract error messages from output
                     if "! " in result.stdout:
                         error_lines = [line for line in result.stdout.split('\n') if "! " in line]
                         for error_line in error_lines:
-                            print(f"LaTeX error: {error_line.strip()}")
+                            current_app.logger.error(f"LaTeX error: {error_line.strip()}")
 
             # Now check if we have a PDF file
             if os.path.exists(temp_pdf_path):
@@ -266,9 +254,10 @@ def generate_letter():
                     'success')
 
                 # Clean up LaTeX auxiliary files
-                print("Cleaning up LaTeX auxiliary files...")
+                # print("Cleaning up LaTeX auxiliary files...")
+                # the .tex file is no longer needed, so it can be deleted as well.
                 aux_extensions = ['.aux', '.log', '.out', '.toc', '.lof', '.lot', '.fls', '.fdb_latexmk',
-                                  '.synctex.gz', '.dvi']
+                                  '.synctex.gz', '.dvi', '.tex']
 
                 # Get all files in the files_letters directory
                 for file in os.listdir(files_letters_dir):
@@ -278,7 +267,7 @@ def generate_letter():
                         try:
                             os.remove(file_path)
                         except Exception as del_error:
-                            print(f"Error deleting auxiliary file {file}: {del_error}")
+                            current_app.logger.error(f"Error deleting auxiliary file {file}: {del_error}")
             else:
                 # Check for log files that might contain error information
                 log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
@@ -291,7 +280,7 @@ def generate_letter():
                             if "! LaTeX Error:" in log_content:
                                 error_lines = [line for line in log_content.split('\n') if "! LaTeX Error:" in line]
                                 for error_line in error_lines:
-                                    print(f"Found LaTeX error: {error_line}")
+                                    current_app.logger.error(f"Found LaTeX error: {error_line}")
                     except Exception:
                         pass
 
