@@ -137,7 +137,6 @@ def test_generate_letter(authenticated_client, app):
 
 def test_view_pdf(authenticated_client, app):
     """Test the POST /api/letters/view_pdf route."""
-    import tempfile
     import unittest.mock as mock
     import io
     from flask import send_file
@@ -145,27 +144,29 @@ def test_view_pdf(authenticated_client, app):
     # Create a mock PDF content in memory
     pdf_content = io.BytesIO(b"Mock PDF content")
 
-    # Mock the send_file function to avoid file system operations
-    original_send_file = send_file
+    # Mock the os.path.exists function to always return True for any path
+    def mock_exists(path):
+        return True
 
-    def mock_send_file(*args, **kwargs):
-        # Return a response with our in-memory PDF content
-        return original_send_file(
+    # Mock the send_file function to return our in-memory PDF content
+    def mock_send_file(path, mimetype):
+        return send_file(
             pdf_content,
-            mimetype="application/pdf",
+            mimetype=mimetype,
             as_attachment=False,
             download_name="test.pdf"
         )
 
-    # Apply the mock
-    with mock.patch('flask.send_file', side_effect=mock_send_file):
-        # View the PDF
-        response = authenticated_client.post("/api/letters/view_pdf", data={
-            "pdf_file": "test.pdf"
-        })
+    # Apply the mocks
+    with mock.patch('os.path.exists', side_effect=mock_exists):
+        with mock.patch('flask.send_file', side_effect=mock_send_file):
+            # View the PDF
+            response = authenticated_client.post("/api/letters/view_pdf", data={
+                "pdf_file": "test.pdf"
+            })
 
-        assert response.status_code == 200
-        assert response.mimetype == "application/pdf"
+            assert response.status_code == 200
+            assert response.mimetype == "application/pdf"
 
 def test_delete_pdf(authenticated_client, app):
     """Test the POST /api/letters/delete_pdf route."""

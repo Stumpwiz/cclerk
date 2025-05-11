@@ -1,6 +1,7 @@
   # Virtual environments
   .env/
   .venv/
+  .idea/
 
   # Byte-compiled files
   __pycache__/

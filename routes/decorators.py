@@ -37,7 +37,7 @@ def role_required(required_role):
                 return redirect(url_for('auth.login'))
 
             # Get user from database
-            user = User.query.get(session['user_id'])
+            user = db.session.get(User, session['user_id'])
             if not user:
                 flash('User not found', 'danger')
                 return redirect(url_for('auth.login'))

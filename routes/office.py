@@ -17,7 +17,7 @@ def get_offices():
     body_id = request.args.get('body_id')
 
     if office_id:
-        office = Office.query.get(office_id)
+        office = db.session.get(Office, office_id)
         if office:
             return jsonify({
                 "id": office.office_id,
@@ -67,7 +67,7 @@ def add_office():
     body_id = data.get('body_id') or data.get('office_body_id')
 
     # Verify that the body exists
-    body = Body.query.get(body_id)
+    body = db.session.get(Body, body_id)
     if not body:
         return jsonify({"success": False, "error": "Body not found"}), 404
 
@@ -106,7 +106,7 @@ def update_office():
     if not data or 'id' not in data:
         return jsonify({"error": "Office ID is required"}), 400
 
-    office = Office.query.get(data['id'])
+    office = db.session.get(Office, data['id'])
     if not office:
         return jsonify({"error": "Office not found"}), 404
 
@@ -116,7 +116,7 @@ def update_office():
         office.office_precedence = data['precedence']
     if 'body_id' in data:
         # Verify that the body exists
-        body = Body.query.get(data['body_id'])
+        body = db.session.get(Body, data['body_id'])
         if not body:
             return jsonify({"error": "Body not found"}), 404
         office.office_body_id = data['body_id']
@@ -141,7 +141,7 @@ def delete_office():
     if not office_id:
         return jsonify({"error": "Office ID is required"}), 400
 
-    office = Office.query.get(office_id)
+    office = db.session.get(Office, office_id)
     if not office:
         return jsonify({"error": "Office not found"}), 404
 

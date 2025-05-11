@@ -19,15 +19,15 @@ def long_form_roster():
     import os
     from flask import jsonify
 
-    # Define the absolute path to the report folder
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
-
+    # Use the app's config for the reports directory
+    report_dir = current_app.config.get('REPORTS_DIR', 'files_roster_reports')
+    if not os.path.isabs(report_dir):
+        report_dir = os.path.join(current_app.root_path, report_dir)
 
     tex_filename = "long_form_roster.tex"
     pdf_filename = "long_form_roster.pdf"
-    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
-    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
+    tex_path = os.path.join(report_dir, tex_filename)
+    pdf_path = os.path.join(report_dir, pdf_filename)
 
     # Step 1: Query and sort all records
     records = ReportRecord.query.order_by(
@@ -103,15 +103,15 @@ def short_form_roster():
     import os
     from flask import jsonify
 
-    # Define the absolute path to the report folder
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
-
+    # Use the app's config for the reports directory
+    report_dir = current_app.config.get('REPORTS_DIR', 'files_roster_reports')
+    if not os.path.isabs(report_dir):
+        report_dir = os.path.join(current_app.root_path, report_dir)
 
     tex_filename = "short_form_roster.tex"
     pdf_filename = "short_form_roster.pdf"
-    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
-    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
+    tex_path = os.path.join(report_dir, tex_filename)
+    pdf_path = os.path.join(report_dir, pdf_filename)
 
     # Step 1: Query and sort all records
     records = ReportRecord.query.order_by(
@@ -187,15 +187,15 @@ def expirations_report():
     import os
     from flask import jsonify
 
-    # Absolute paths
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
-
+    # Use the app's config for the reports directory
+    report_dir = current_app.config.get('REPORTS_DIR', 'files_roster_reports')
+    if not os.path.isabs(report_dir):
+        report_dir = os.path.join(current_app.root_path, report_dir)
 
     tex_filename = "expirations_report.tex"
     pdf_filename = "expirations_report.pdf"
-    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
-    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
+    tex_path = os.path.join(report_dir, tex_filename)
+    pdf_path = os.path.join(report_dir, pdf_filename)
 
     # Determine current year for filter and title
     current_year = datetime.now().year
@@ -277,15 +277,15 @@ def vacancies_report():
     import os
     from flask import jsonify
 
-    # Define absolute paths for robustness
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    report_dir = os.path.abspath(os.path.join(basedir, "..", "files_roster_reports"))
-
+    # Use the app's config for the reports directory
+    report_dir = current_app.config.get('REPORTS_DIR', 'files_roster_reports')
+    if not os.path.isabs(report_dir):
+        report_dir = os.path.join(current_app.root_path, report_dir)
 
     tex_filename = "vacancies_report.tex"
     pdf_filename = "vacancies_report.pdf"
-    tex_path = os.path.join(current_app.root_path, report_dir, tex_filename)
-    pdf_path = os.path.join(current_app.root_path, report_dir, pdf_filename)
+    tex_path = os.path.join(report_dir, tex_filename)
+    pdf_path = os.path.join(report_dir, pdf_filename)
 
     # Query and sort all records
     records = ReportRecord.query.filter(

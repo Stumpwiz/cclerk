@@ -124,7 +124,7 @@ def view_pdf():
         return redirect(url_for('letters.get_letters_html'))
 
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
-    pdf_path = os.path.join(current_app.root_path, files_letters_dir, pdf_file)
+    pdf_path = os.path.join(files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')
@@ -151,7 +151,7 @@ def delete_pdf():
         return redirect(url_for('letters.get_letters_html'))
 
     files_letters_dir = os.path.join(current_app.root_path, "files_letters")
-    pdf_path = os.path.join(current_app.root_path, files_letters_dir, pdf_file)
+    pdf_path = os.path.join(files_letters_dir, pdf_file)
 
     if not os.path.exists(pdf_path):
         flash(f'PDF file {pdf_file} not found.', 'danger')

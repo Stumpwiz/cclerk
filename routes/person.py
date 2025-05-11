@@ -16,7 +16,7 @@ def get_persons():
     person_id = request.args.get('id')
 
     if person_id:
-        person = Person.query.get(person_id)
+        person = db.session.get(Person, person_id)
         if person:
             return jsonify({
                 "id": person.person_id,
@@ -96,7 +96,7 @@ def update_person():
     if not data or 'id' not in data:
         return jsonify({"error": "Person ID is required"}), 400
 
-    person = Person.query.get(data['id'])
+    person = db.session.get(Person, data['id'])
     if not person:
         return jsonify({"error": "Person not found"}), 404
 
@@ -137,7 +137,7 @@ def delete_person():
     if not person_id:
         return jsonify({"error": "Person ID is required"}), 400
 
-    person = Person.query.get(person_id)
+    person = db.session.get(Person, person_id)
     if not person:
         return jsonify({"error": "Person not found"}), 404
 

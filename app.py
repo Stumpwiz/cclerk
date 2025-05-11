@@ -141,7 +141,7 @@ def create_app(test_config=None):
         if user_id is None:
             g.user = None
         else:
-            g.user = User.query.get(user_id)
+            g.user = db.session.get(User, user_id)
 
     with app.app_context():
         db.create_all()  # Create all tables (like the "users" table)

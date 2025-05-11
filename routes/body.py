@@ -16,7 +16,7 @@ def get_bodies():
     body_id = request.args.get('id')
 
     if body_id:
-        body = Body.query.get(body_id)
+        body = db.session.get(Body, body_id)
         if body:
             return jsonify({
                 "id": body.body_id,
@@ -89,7 +89,7 @@ def update_body():
     if not data or 'id' not in data:
         return jsonify({"error": "Body ID is required"}), 400
 
-    body = Body.query.get(data['id'])
+    body = db.session.get(Body, data['id'])
     if not body:
         return jsonify({"error": "Body not found"}), 404
 
@@ -123,7 +123,7 @@ def delete_body():
     if not body_id:
         return jsonify({"error": "Body ID is required"}), 400
 
-    body = Body.query.get(body_id)
+    body = db.session.get(Body, body_id)
     if not body:
         return jsonify({"error": "Body not found"}), 404
 
@@ -203,7 +203,7 @@ def update_body_html():
         flash('Body ID is required', 'danger')
         return redirect(url_for('body.view_bodies'))
 
-    body = Body.query.get(body_id)
+    body = db.session.get(Body, body_id)
     if not body:
         flash('Body not found', 'danger')
         return redirect(url_for('body.view_bodies'))
@@ -231,7 +231,7 @@ def delete_body_html():
         flash('Body ID is required', 'danger')
         return redirect(url_for('body.view_bodies'))
 
-    body = Body.query.get(body_id)
+    body = db.session.get(Body, body_id)
     if not body:
         flash('Body not found', 'danger')
         return redirect(url_for('body.view_bodies'))

@@ -82,12 +82,12 @@ def add_term():
         return jsonify({"success": False, "error": "Person ID and Office ID are required"}), 400
 
     # Verify that the person exists
-    person = Person.query.get(term_person_id)
+    person = db.session.get(Person, term_person_id)
     if not person:
         return jsonify({"success": False, "error": "Person not found"}), 404
 
     # Verify that the office exists
-    office = Office.query.get(term_office_id)
+    office = db.session.get(Office, term_office_id)
     if not office:
         return jsonify({"success": False, "error": "Office not found"}), 404
 
