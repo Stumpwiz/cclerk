@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import request, jsonify, current_app
+from extensions import db
 
 
 def login_required(f):

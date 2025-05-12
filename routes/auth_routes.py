@@ -17,6 +17,7 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
+            session.permanent = False  # Make session expire when browser is closed
             session["user_id"] = user.id
             flash("Logged in successfully!", "success")
             return redirect(url_for("main.index"))
