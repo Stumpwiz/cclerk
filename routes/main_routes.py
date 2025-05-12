@@ -21,21 +21,7 @@ def backup_current_database(db_path, temp_backup):
             os.remove(temp_backup)
         shutil.copy2(db_path, temp_backup)
 
-def create_empty_database(temp_new_db):
-    """
-    Create a new empty database file.
-    """
-    if os.path.exists(temp_new_db):
-        os.remove(temp_new_db)
-    open(temp_new_db, 'a').close()
 
-def restore_from_sql(temp_new_db, sql_path):
-    """
-    Restore from the SQL file to the new database.
-    """
-    command = f"sqlite3 {temp_new_db} < {sql_path}"
-    # On Windows, we need to use shell=True to handle the redirection
-    subprocess.run(command, shell=True, check=True)
 
 def replace_database(db_path, temp_new_db):
     """
@@ -101,8 +87,8 @@ def index():
             with open(restore_completed_path, 'r') as f:
                 restore_info = json.load(f)
 
-            # Get the SQL file name and timestamp
-            sql_file = restore_info.get('sql_file')
+            # Get the backup file name and timestamp
+            backup_file = restore_info.get('backup_file')
             timestamp = restore_info.get('timestamp')
 
             # Format the timestamp for display
@@ -117,7 +103,7 @@ def index():
                 pass
 
             # Flash a message to the user
-            flash(f"The database has been restored from backup file '{sql_file}' at {formatted_timestamp}.", 'success')
+            flash(f"The database has been restored from backup file '{backup_file}' at {formatted_timestamp}.", 'success')
 
             # Delete the file to ensure the message is only shown once
             os.remove(restore_completed_path)
@@ -135,11 +121,8 @@ def index():
     backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
     if os.path.exists(backup_dir):
         for file in os.listdir(backup_dir):
-            # Match files with the pattern YY.MM.DD.HH.mm.SS.sql or the old format backupYYMMDDHHmmSS.sql
-            if file.endswith(".sql") and (
-                (file.count('.') == 6 and len(file.split('.')[0]) == 2) or  # New format: YY.MM.DD.HH.mm.SS.sql
-                file.startswith("backup")  # Old format: backupYYMMDDHHmmSS.sql
-            ):
+            # Match files with the pattern YY.MM.DD.HH.mm.SS.db
+            if file.endswith(".db") and file.count('.') == 6 and len(file.split('.')[0]) == 2:
                 backup_files.append(file)
 
     # Get the list of PDF files from the reports directory
@@ -161,7 +144,7 @@ def index():
 def backup_database():
     # Create the timestamp for the backup filename exactly as specified
     timestamp = datetime.datetime.now().strftime("%y.%m.%d.%H.%M.%S")
-    backup_filename = f"{timestamp}.sql"
+    backup_filename = f"{timestamp}.db"
 
     # Create the backup directory if it doesn't exist
     backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
@@ -170,12 +153,11 @@ def backup_database():
     backup_path = os.path.join(backup_dir, backup_filename)
 
     try:
-        # Execute the SQLite backup command
+        # Get the path to the current database
         db_path = os.path.join(current_app.root_path, current_app.config['DB_PATH'])
-        command = f"sqlite3 {db_path} .dump > {backup_path}"
 
-        # On Windows, we need to use shell=True to handle the redirection
-        subprocess.run(command, shell=True, check=True)
+        # Copy the database file
+        shutil.copy2(db_path, backup_path)
 
         return jsonify({"success": True, "filename": backup_filename})
     except Exception as e:
@@ -206,10 +188,6 @@ def view_file():
             file_url = url_for('main.serve_pdf', filename=filename)
             return jsonify({"success": True, "file_url": file_url})
 
-        elif file_ext == '.sql':
-            # Return a URL for the client to open the SQL file in a new browser tab
-            file_url = url_for('main.serve_sql', filename=filename)
-            return jsonify({"success": True, "file_url": file_url})
 
         elif file_ext == '.txt':
             # For now, still open text files with the default application
@@ -240,23 +218,6 @@ def serve_pdf(filename):
         flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
-@main_bp.route("/serve_sql/<filename>")
-@handle_errors
-def serve_sql(filename):
-    """
-    Serve an SQL file directly to the browser as a text file.
-    """
-    valid, result = validate_file_exists(filename)
-
-    if not valid:
-        flash(result, 'danger')
-        return redirect(url_for('main.index'))
-
-    try:
-        return serve_file(result, 'text/plain')
-    except Exception as e:
-        flash(str(e), 'danger')
-        return redirect(url_for('main.index'))
 
 @main_bp.route("/view_pdf", methods=["POST"])
 @handle_errors
@@ -300,48 +261,12 @@ def view_pdf():
         flash(str(e), 'danger')
         return redirect(url_for('main.index'))
 
-@main_bp.route("/view_sql", methods=["POST"])
-@handle_errors
-def view_sql():
-    """
-    View the selected SQL file directly in the browser as a text file.
-    """
-    # Check if the backup directory exists and has SQL files
-    backup_dir = os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'])
-    success, result = check_directory_for_files(
-        backup_dir, 
-        '.sql', 
-        f'No SQL files found. The {current_app.config["BACKUP_DIR"]} directory does not exist.'
-    )
-
-    if not success:
-        flash(result, 'info')
-        return redirect(url_for('main.index'))
-
-    sql_files = result
-
-    sql_file = request.form.get('sql_file')
-    if not sql_file:
-        flash('No SQL file selected.', 'danger')
-        return redirect(url_for('main.index'))
-
-    valid, result = validate_file_exists(sql_file)
-    if not valid:
-        flash(result, 'danger')
-        return redirect(url_for('main.index'))
-
-    # Serve the SQL file directly to the browser as a text file
-    try:
-        return serve_file(result, 'text/plain')
-    except Exception as e:
-        flash(str(e), 'danger')
-        return redirect(url_for('main.index'))
 
 @main_bp.route("/restore", methods=["POST"])
 @handle_errors
 def restore_database():
     """
-    Restore the database from a selected SQL backup file.
+    Restore the database from a selected database backup file.
 
     If the database is locked by the running server, this will schedule
     a restore operation to be performed on the next server start.
@@ -350,22 +275,21 @@ def restore_database():
     if not request.is_json:
         return jsonify({"success": False, "error": "Request must be JSON"}), 400
 
-    # Get the selected SQL file from the request
-    sql_file = request.json.get("filename")
-    if not sql_file:
+    # Get the selected backup file from the request
+    backup_file = request.json.get("filename")
+    if not backup_file:
         return jsonify({"success": False, "error": "Filename is required"}), 400
 
-    valid, result = validate_file_exists(sql_file)
+    valid, result = validate_file_exists(backup_file)
 
     if not valid:
         return jsonify({"success": False, "error": result}), 400
 
-    sql_path = result
+    backup_path = result
 
     # Database path
     db_path = os.path.join(current_app.root_path, current_app.config['DB_PATH'])
     temp_backup = f"{db_path}.bak"
-    temp_new_db = f"{db_path}.new"
 
     try:
         # Close all database connections
@@ -375,27 +299,24 @@ def restore_database():
         import gc
         gc.collect()
 
-        # Step 1: Create a new empty database file
-        create_empty_database(temp_new_db)
-
-        # Step 2: Restore from the SQL file to the new database
-        restore_from_sql(temp_new_db, sql_path)
-
-        # Step 3: Create a backup of the current database
+        # Step 1: Create a backup of the current database
         backup_current_database(db_path, temp_backup)
 
-        # Step 4: Replace the current database with the new one
+        # Step 2: Replace the current database with the backup
         try:
-            replace_database(db_path, temp_new_db)
+            # Try to copy the backup file directly to the database location
+            if os.path.exists(db_path):
+                os.remove(db_path)
+            shutil.copy2(backup_path, db_path)
 
-            # Step 5: Clean up the temporary backup
+            # Step 3: Clean up the temporary backup
             cleanup_backup(temp_backup)
 
-            return jsonify({"success": True, "message": f"Database restored successfully from {sql_file}"})
+            return jsonify({"success": True, "message": f"Database restored successfully from {backup_file}"})
         except Exception as e:
             if "locked by another process" in str(e):
                 # Schedule the restore operation for the next server start
-                schedule_restore_operation(sql_file)
+                schedule_restore_operation(backup_file)
 
                 # Provide a clear error message to the user with accurate instructions
                 return jsonify({
@@ -413,7 +334,7 @@ def restore_database():
 
         return jsonify({"success": False, "error": str(e)}), 500
 
-def schedule_restore_operation(sql_file):
+def schedule_restore_operation(backup_file):
     """
     Schedule a database restore operation to be performed on the next server start.
 
@@ -426,11 +347,11 @@ def schedule_restore_operation(sql_file):
     # Write the restore information to the file
     with open(restore_info_path, 'w') as f:
         json.dump({
-            'sql_file': sql_file,
+            'backup_file': backup_file,
             'timestamp': datetime.datetime.now().isoformat()
         }, f)
 
-    current_app.logger.info(f"Scheduled restore operation from {sql_file}")
+    current_app.logger.info(f"Scheduled restore operation from {backup_file}")
 
 @main_bp.route("/delete_file", methods=["POST"])
 @handle_errors

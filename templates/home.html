@@ -403,8 +403,7 @@
                                     });
                                     // Add active class to clicked item
                                     this.classList.add('active');
-                                    // Update the hidden input field for the View form
-                                    document.getElementById('view_sql_file').value = this.textContent.trim();
+                                    // No need to update hidden input field as View functionality has been removed
                                 });
 
                                 // Show the success message
@@ -496,8 +495,7 @@
             // Select the first item by default if there are any items
             if (backupFileItems.length > 0) {
                 backupFileItems[0].classList.add('active');
-                // Update the hidden input field for the View form with the first SQL file
-                document.getElementById('view_sql_file').value = backupFileItems[0].textContent.trim();
+                // No need to update hidden input field as View functionality has been removed
             }
 
             backupFileItems.forEach(function (item) {
@@ -509,8 +507,7 @@
                     });
                     // Add active class to clicked item
                     this.classList.add('active');
-                    // Update the hidden input field for the View form
-                    document.getElementById('view_sql_file').value = this.textContent.trim();
+                    // No need to update hidden input field as View functionality has been removed
                 });
             });
 
@@ -677,33 +674,7 @@
                 });
             }
 
-            // Add an event handler for the View SQL button
-            const viewSqlButton = document.getElementById('btn_view_sql');
-            if (viewSqlButton) {
-                viewSqlButton.addEventListener('click', function (e) {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('backupFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-                    const hiddenInput = document.getElementById('view_sql_file');
-
-                    // Check if a file is selected
-                    if (!selectedFile) {
-                        e.preventDefault(); // Prevent form submission
-                        alert('Please select a SQL file to view');
-                        return;
-                    }
-
-                    // Check if the hidden input field has a value
-                    if (!hiddenInput.value) {
-                        e.preventDefault(); // Prevent form submission
-                        alert('No SQL file selected');
-                        return;
-                    }
-
-                    // Set the value of the hidden input field to the selected file
-                    hiddenInput.value = selectedFile.textContent.trim();
-                });
-            }
+            // View SQL button handler removed as per requirements
 
             // Add an event handler for the Delete SQL button
             const deleteSqlButton = document.getElementById('btn_delete_sql');
@@ -789,11 +760,9 @@
                                 // Select the first item if available
                                 if (filesList.children.length > 0) {
                                     filesList.children[0].classList.add('active');
-                                    // Update the hidden input field for the View form
-                                    document.getElementById('view_sql_file').value = filesList.children[0].textContent.trim();
+                                    // No need to update hidden input field as View functionality has been removed
                                 } else {
-                                    // Clear the hidden input field if no files are left
-                                    document.getElementById('view_sql_file').value = '';
+                                    // No need to clear hidden input field as View functionality has been removed
                                 }
 
                                 // Show the success message
@@ -923,14 +892,7 @@
                                         <!-- Action Buttons -->
                                         <div class="row">
                                             <div class="col-6 mb-2">
-                                                <form method="POST" action="{{ url_for('main.view_sql') }}"
-                                                      target="_blank">
-                                                    {{ form.csrf_token }}
-                                                    <input type="hidden" id="view_sql_file" name="sql_file" value="">
-                                                    <button type="submit" id="btn_view_sql"
-                                                            class="btn btn-sm btn-primary w-100">View
-                                                    </button>
-                                                </form>
+                                                <!-- View button removed as per requirements -->
                                             </div>
                                             <div class="col-6">
                                                 <button type="button" id="btn_delete_sql"

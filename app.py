@@ -33,25 +33,24 @@ def check_for_scheduled_restore(app):
         with open(restore_info_path, 'r') as f:
             restore_info = json.load(f)
 
-        sql_file = restore_info.get('sql_file')
-        if not sql_file:
-            app.logger.error("Invalid restore information: missing SQL file name")
+        backup_file = restore_info.get('backup_file')
+        if not backup_file:
+            app.logger.error("Invalid restore information: missing backup file name")
             os.remove(restore_info_path)
             return
 
-        # Get the full path to the SQL file
+        # Get the full path to the backup file
         backup_dir = os.path.join(app.root_path, app.config['BACKUP_DIR'])
-        sql_path = os.path.join(backup_dir, sql_file)
+        backup_path = os.path.join(backup_dir, backup_file)
 
-        if not os.path.exists(sql_path):
-            app.logger.error(f"SQL file not found: {sql_path}")
+        if not os.path.exists(backup_path):
+            app.logger.error(f"Backup file not found: {backup_path}")
             os.remove(restore_info_path)
             return
 
         # Database path
         db_path = os.path.join(app.root_path, app.config['DB_PATH'])
         temp_backup = f"{db_path}.bak"
-        temp_new_db = f"{db_path}.new"
 
         # Create a backup of the current database
         if os.path.exists(db_path):
@@ -59,31 +58,22 @@ def check_for_scheduled_restore(app):
                 os.remove(temp_backup)
             shutil.copy2(db_path, temp_backup)
 
-        # Create a new empty database file
-        if os.path.exists(temp_new_db):
-            os.remove(temp_new_db)
-        open(temp_new_db, 'a').close()
-
-        # Restore from the SQL file to the new database
-        command = f"sqlite3 {temp_new_db} < {sql_path}"
-        subprocess.run(command, shell=True, check=True)
-
-        # Replace the current database with the new one
+        # Replace the current database with the backup
         if os.path.exists(db_path):
             os.remove(db_path)
-        shutil.move(temp_new_db, db_path)
+        shutil.copy2(backup_path, db_path)
 
         # Clean up the temporary backup
         if os.path.exists(temp_backup):
             os.remove(temp_backup)
 
-        app.logger.info(f"Successfully restored database from {sql_file}")
+        app.logger.info(f"Successfully restored database from {backup_file}")
 
         # Create a file to indicate that a restore has been completed
         restore_completed_path = os.path.join(app.root_path, 'instance', 'restore_completed.json')
         with open(restore_completed_path, 'w') as f:
             json.dump({
-                'sql_file': sql_file,
+                'backup_file': backup_file,
                 'timestamp': datetime.datetime.now().isoformat()
             }, f)
         app.logger.info(f"Created restore_completed.json file")
