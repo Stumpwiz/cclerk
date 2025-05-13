@@ -34,7 +34,6 @@ def app():
         'SECRET_KEY': 'test_secret_key',
         'WTF_CSRF_ENABLED': False,  # optional: if you use Flask-WTF
         'DATABASE': db_path,  # Add this for init_db to work
-        'BACKUP_DIR': 'files_db_backups',  # Add these for the index route
         'REPORTS_DIR': 'files_roster_reports'
     })
 

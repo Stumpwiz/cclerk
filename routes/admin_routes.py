@@ -70,7 +70,7 @@ def add_user():
 @role_required('admin')
 @handle_errors
 def edit_user(id):
-    user = User.query.get_or_404(id)
+    user = db.get_or_404(User, id)
     form = UserForm(obj=user)
 
     # Don't require password for editing
@@ -112,7 +112,7 @@ def edit_user(id):
 @role_required('admin')
 @handle_errors
 def delete_user(id):
-    user = User.query.get_or_404(id)
+    user = db.get_or_404(User, id)
 
     # Prevent admin from deleting their own account
     if session.get('user_id') == user.id:

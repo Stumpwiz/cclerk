@@ -11,9 +11,6 @@ def get_file_path(filename):
     if file_ext == '.pdf':
         # PDF files are in the reports directory
         return os.path.join(current_app.root_path, current_app.config['REPORTS_DIR'], filename)
-    elif file_ext == '.sql':
-        # SQL backup files are in backup directory
-        return os.path.join(current_app.root_path, current_app.config['BACKUP_DIR'], filename)
     elif file_ext == '.txt':
         # Text files are in instance/letter_template
         return os.path.join(current_app.root_path, "instance", "letter_template", filename)

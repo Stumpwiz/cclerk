@@ -21,7 +21,6 @@ def test_home_route_authenticated(authenticated_client):
     response = authenticated_client.get("/")  # Simulate another GET request
     assert response.status_code == 200  # Check for a successful response
     assert b"Refresh and View Reports" in response.data  # Check that the response's HTML contains expected content
-    assert b"Backup/Restore Database" in response.data  # Check that the response's HTML contains expected content
 
 
 def test_login_route_get(client):
@@ -69,7 +68,6 @@ def test_login_route_post_valid(client, app):
 
     # Check that we're redirected to the home page
     assert b"Refresh and View Reports" in response.data
-    assert b"Backup/Restore Database" in response.data
 
 
 def test_logout_route(authenticated_client):

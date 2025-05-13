@@ -27,7 +27,7 @@ def test_update_body_api(authenticated_client, test_data):
 
     # Check that the body was updated in the database
     with authenticated_client.application.app_context():
-        updated_body = Body.query.get(body_id)
+        updated_body = db.session.get(Body, body_id)
         assert updated_body.name == "Updated Body Name"
         assert updated_body.mission == "Updated Mission"
         assert updated_body.body_precedence == 5.0
@@ -50,7 +50,7 @@ def test_delete_body_api(authenticated_client, test_data, app):
 
     # Check that the body was deleted from the database
     with app.app_context():
-        deleted_body = Body.query.get(body_id)
+        deleted_body = db.session.get(Body, body_id)
         assert deleted_body is None
 
 def test_delete_body_with_offices_api(authenticated_client, test_data, app):
@@ -81,7 +81,7 @@ def test_delete_body_with_offices_api(authenticated_client, test_data, app):
 
     # Check that the body was not deleted from the database
     with app.app_context():
-        body = Body.query.get(body_id)
+        body = db.session.get(Body, body_id)
         assert body is not None
         assert body.name == "Body with Offices"
 
@@ -149,7 +149,7 @@ def test_update_body_html(authenticated_client, test_data):
 
     # Check that the body was updated in the database
     with authenticated_client.application.app_context():
-        updated_body = Body.query.get(body_id)
+        updated_body = db.session.get(Body, body_id)
         assert updated_body.name == "Updated via HTML"
         assert updated_body.mission == "Updated via HTML form"
         assert updated_body.body_precedence == 8.5
@@ -181,7 +181,7 @@ def test_delete_body_html(authenticated_client, app):
 
     # Check that the body was deleted from the database
     with app.app_context():
-        deleted_body = Body.query.get(body_id)
+        deleted_body = db.session.get(Body, body_id)
         assert deleted_body is None
 
 def test_delete_body_with_offices_html(authenticated_client, app):
@@ -220,6 +220,6 @@ def test_delete_body_with_offices_html(authenticated_client, app):
 
     # Check that the body was not deleted from the database
     with app.app_context():
-        body = Body.query.get(body_id)
+        body = db.session.get(Body, body_id)
         assert body is not None
         assert body.name == "HTML Body with Offices"

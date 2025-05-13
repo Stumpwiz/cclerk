@@ -347,169 +347,6 @@
                 });
             });
 
-            // Find all buttons
-            const buttons = document.querySelectorAll('button.btn-primary');
-
-            // Find the backup and restore buttons by their text content
-            let backupButton = null;
-            let restoreButton = null;
-            buttons.forEach(function (button) {
-                if (button.textContent.trim() === 'Backup') {
-                    backupButton = button;
-                } else if (button.textContent.trim() === 'Restore') {
-                    restoreButton = button;
-                }
-            });
-
-            // Add click event listener to the backup button
-            if (backupButton) {
-                backupButton.addEventListener('click', function () {
-                    // Show the loading indicator or disable button
-                    this.disabled = true;
-                    this.innerHTML = 'Backing up...';
-
-                    // Get CSRF token from meta tag
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    // Make AJAX request to backup endpoint
-                    fetch('/backup', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = 'Backup';
-
-                            if (data.success) {
-                                // Add the new backup file to the list
-                                const filesList = document.getElementById('backupFilesList');
-                                const fileItem = document.createElement('a');
-                                fileItem.href = '#';
-                                fileItem.className = 'list-group-item list-group-item-action';
-                                fileItem.textContent = data.filename;
-                                filesList.appendChild(fileItem);
-
-                                // Add click event listener to the new file item
-                                fileItem.addEventListener('click', function (e) {
-                                    e.preventDefault();
-                                    // Remove the active class from all items
-                                    document.querySelectorAll('#backupFilesList a').forEach(function (i) {
-                                        i.classList.remove('active');
-                                    });
-                                    // Add active class to clicked item
-                                    this.classList.add('active');
-                                    // No need to update hidden input field as View functionality has been removed
-                                });
-
-                                // Show the success message
-                                alert('Backup created successfully: ' + data.filename);
-                            } else {
-                                // Show the error message
-                                alert('Backup failed: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = 'Backup';
-
-                            // Show the error message
-                            alert('Backup failed: ' + error);
-                        });
-                });
-            }
-
-            // Add click event listener to the restore button
-            if (restoreButton) {
-                restoreButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('backupFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-
-                    // Check if a file is selected
-                    if (!selectedFile) {
-                        alert('Please select a SQL file to restore from');
-                        return;
-                    }
-
-                    // Confirm restoration
-                    if (!confirm('Are you sure you want to restore the database from this backup? This will overwrite the current database and cannot be undone.')) {
-                        return;
-                    }
-
-                    // Show the loading indicator or disable button
-                    this.disabled = true;
-                    this.innerHTML = 'Restoring...';
-
-                    // Get CSRF token from meta tag
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    // Make AJAX request to restore endpoint
-                    fetch('/restore', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({
-                            filename: selectedFile.textContent.trim()
-                        })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = 'Restore';
-
-                            if (data.success) {
-                                // Show the success message
-                                alert('Database restored successfully from: ' + selectedFile.textContent.trim());
-                            } else if (data.scheduled) {
-                                // Show a message about the scheduled restore
-                                alert(data.error + '\n\n' + data.message + '\n\nThe database will be automatically restored when the server is restarted.');
-                            } else {
-                                // Show the general error message
-                                alert('Restore failed: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = 'Restore';
-
-                            // Show the error message
-                            alert('Restore failed: ' + error);
-                        });
-                });
-            }
-
-
-            // Make backup files list items selectable
-            const backupFileItems = document.querySelectorAll('#backupFilesList a');
-
-            // Select the first item by default if there are any items
-            if (backupFileItems.length > 0) {
-                backupFileItems[0].classList.add('active');
-                // No need to update hidden input field as View functionality has been removed
-            }
-
-            backupFileItems.forEach(function (item) {
-                item.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    // Remove the active class from all items
-                    backupFileItems.forEach(function (i) {
-                        i.classList.remove('active');
-                    });
-                    // Add active class to clicked item
-                    this.classList.add('active');
-                    // No need to update hidden input field as View functionality has been removed
-                });
-            });
 
 
             // Make PDF files list items selectable
@@ -676,112 +513,6 @@
 
             // View SQL button handler removed as per requirements
 
-            // Add an event handler for the Delete SQL button
-            const deleteSqlButton = document.getElementById('btn_delete_sql');
-            if (deleteSqlButton) {
-                deleteSqlButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('backupFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-
-                    // Check if a file is selected
-                    if (!selectedFile) {
-                        alert('Please select a SQL file to delete');
-                        return;
-                    }
-
-                    // Confirm deletion
-                    if (!confirm('Are you sure you want to delete this SQL file? This action cannot be undone.')) {
-                        return;
-                    }
-
-                    // Show the loading indicator or disable button
-                    this.disabled = true;
-                    const originalText = this.innerHTML;
-                    this.innerHTML = 'Deleting...';
-
-                    // Get CSRF token from meta tag
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    // Check if CSRF token is valid
-                    if (!csrfToken || csrfToken.trim() === '') {
-                        console.error('CSRF token is empty or invalid');
-                        alert('CSRF token is missing or invalid. Please refresh the page and try again.');
-                        this.disabled = false;
-                        this.innerHTML = originalText;
-                        return;
-                    }
-
-                    // Make AJAX request to delete_file endpoint
-                    fetch('/delete_file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({
-                            filename: selectedFile.textContent.trim()
-                        }),
-                        credentials: 'same-origin'
-                    })
-                        .then(response => {
-                            // Always try to parse the response as text first
-                            return response.text().then(text => {
-                                // Try to parse the text as JSON
-                                try {
-                                    const data = JSON.parse(text);
-
-                                    // If parsing succeeds, check if the response was ok
-                                    if (!response.ok) {
-                                        throw new Error(data.error || data.details || 'Server returned an error');
-                                    }
-                                    return data;
-                                } catch (e) {
-                                    // If JSON parsing fails, check if it's HTML
-                                    if (text.includes('<!doctype') || text.includes('<html')) {
-                                        throw new Error('Server returned an HTML page instead of JSON. Please check your CSRF token.');
-                                    }
-                                    // If it's not HTML, just return the text as the error
-                                    throw new Error(text || 'Unknown error');
-                                }
-                            });
-                        })
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            if (data.success) {
-                                // Remove the file from the list
-                                selectedFile.remove();
-
-                                // Select the first item if available
-                                if (filesList.children.length > 0) {
-                                    filesList.children[0].classList.add('active');
-                                    // No need to update hidden input field as View functionality has been removed
-                                } else {
-                                    // No need to clear hidden input field as View functionality has been removed
-                                }
-
-                                // Show the success message
-                                alert('File deleted successfully');
-                            } else {
-                                // Show the error message
-                                alert('Failed to delete file: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            // Show the error message
-                            alert('Failed to delete file: ' + error);
-                        });
-                });
-            }
         });
     </script>
     <style>
@@ -798,10 +529,46 @@
         .full-height-card {
             height: 100%;
         }
+
+        .favicon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .favicon-img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Responsive styling for phone displays */
+        @media (max-width: 767px) {
+            .full-height-row {
+                flex-direction: column;
+            }
+
+            #favicon_column {
+                order: 1;
+                margin-bottom: 20px;
+            }
+
+            #reports_column {
+                order: 2;
+            }
+        }
     </style>
     <div class="container full-height-container">
         <div class="row full-height-row">
-            <!-- Left Column - Generate Reports -->
+            <!-- Left Column - Favicon Image -->
+            <div id="favicon_column" class="col-md-6">
+                <div class="card mb-4 full-height-card">
+                    <div class="card-body favicon-container">
+                        <img src="{{ url_for('static', filename='favicon.png') }}" alt="Logo" class="favicon-img">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Generate Reports -->
             <div id="reports_column" class="col-md-6">
                 <div class="card mb-4 full-height-card">
                     <div class="card-header">
@@ -847,55 +614,6 @@
                                             </div>
                                             <div class="col-6">
                                                 <button type="button" id="btn_delete_pdf"
-                                                        class="btn btn-sm btn-danger w-100">Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column - Backup/Restore -->
-            <div id="backup_column" class="col-md-6">
-                <div class="card mb-4 full-height-card">
-                    <div class="card-header">
-                        <h3>Backup/Restore Database</h3>
-                    </div>
-                    <div class="card-body" style="min-height: 300px;">
-                        <div class="row h-100">
-                            <!-- Left Column - Buttons -->
-                            <div class="col-md-6">
-                                <div class="d-flex flex-column justify-content-start h-100">
-                                    <button type="button" class="btn btn-primary mb-3">Backup</button>
-                                    <button type="button" class="btn btn-primary mb-3">Restore</button>
-                                </div>
-                            </div>
-
-                            <!-- Right Column - Display Window -->
-                            <div class="col-md-6 h-100">
-                                <div class="card h-100">
-                                    <div class="card-header">
-                                        <h5>Generated Backups</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div id="backupFilesList" class="list-group mb-3">
-                                            <!-- Files will be displayed here -->
-                                            {% for file in backup_files %}
-                                                <a href="#"
-                                                   class="list-group-item list-group-item-action">{{ file }}</a>
-                                            {% endfor %}
-                                        </div>
-                                        <!-- Action Buttons -->
-                                        <div class="row">
-                                            <div class="col-6 mb-2">
-                                                <!-- View button removed as per requirements -->
-                                            </div>
-                                            <div class="col-6">
-                                                <button type="button" id="btn_delete_sql"
                                                         class="btn btn-sm btn-danger w-100">Delete
                                                 </button>
                                             </div>

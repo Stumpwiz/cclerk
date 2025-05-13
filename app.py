@@ -13,85 +13,6 @@ import datetime
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
-def check_for_scheduled_restore(app):
-    """
-    Check if a database restore operation has been scheduled and perform it if needed.
-
-    This function is called when the application starts. It checks for the presence
-    of a restore_scheduled.json file in the instance directory. If the file exists,
-    it performs the restore operation and then deletes the file.
-    """
-    restore_info_path = os.path.join(app.root_path, 'instance', 'restore_scheduled.json')
-
-    if not os.path.exists(restore_info_path):
-        return
-
-    app.logger.info("Found scheduled restore operation")
-
-    try:
-        # Read the restore information from the file
-        with open(restore_info_path, 'r') as f:
-            restore_info = json.load(f)
-
-        backup_file = restore_info.get('backup_file')
-        if not backup_file:
-            app.logger.error("Invalid restore information: missing backup file name")
-            os.remove(restore_info_path)
-            return
-
-        # Get the full path to the backup file
-        backup_dir = os.path.join(app.root_path, app.config['BACKUP_DIR'])
-        backup_path = os.path.join(backup_dir, backup_file)
-
-        if not os.path.exists(backup_path):
-            app.logger.error(f"Backup file not found: {backup_path}")
-            os.remove(restore_info_path)
-            return
-
-        # Database path
-        db_path = os.path.join(app.root_path, app.config['DB_PATH'])
-        temp_backup = f"{db_path}.bak"
-
-        # Create a backup of the current database
-        if os.path.exists(db_path):
-            if os.path.exists(temp_backup):
-                os.remove(temp_backup)
-            shutil.copy2(db_path, temp_backup)
-
-        # Replace the current database with the backup
-        if os.path.exists(db_path):
-            os.remove(db_path)
-        shutil.copy2(backup_path, db_path)
-
-        # Clean up the temporary backup
-        if os.path.exists(temp_backup):
-            os.remove(temp_backup)
-
-        app.logger.info(f"Successfully restored database from {backup_file}")
-
-        # Create a file to indicate that a restore has been completed
-        restore_completed_path = os.path.join(app.root_path, 'instance', 'restore_completed.json')
-        with open(restore_completed_path, 'w') as f:
-            json.dump({
-                'backup_file': backup_file,
-                'timestamp': datetime.datetime.now().isoformat()
-            }, f)
-        app.logger.info(f"Created restore_completed.json file")
-    except Exception as e:
-        app.logger.error(f"Error during scheduled restore: {str(e)}")
-
-        # Try to restore the original database if something went wrong
-        if os.path.exists(temp_backup) and not os.path.exists(db_path):
-            try:
-                shutil.copy2(temp_backup, db_path)
-                app.logger.info("Restored original database after failed restore")
-            except Exception:
-                app.logger.error("Failed to restore original database")
-    finally:
-        # Delete the restore information file
-        if os.path.exists(restore_info_path):
-            os.remove(restore_info_path)
-            app.logger.info("Removed scheduled restore information file")
 
 
 def create_app(test_config=None):
@@ -114,9 +35,6 @@ def create_app(test_config=None):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-    # Check for scheduled database restore operations
-    with app.app_context():
-        check_for_scheduled_restore(app)
 
     # Routes are now defined in blueprint files in the routes/ directory
     # - Main routes (/, /favicon.ico) are in routes/main_routes.py
@@ -175,7 +93,7 @@ def create_app(test_config=None):
             print("CSRF token not found in form data")
 
         # Always return JSON for any delete requests, regardless of method
-        if '/delete_file' in request.path or '/delete_pdf' in request.path or '/delete_sql' in request.path:
+        if '/delete_file' in request.path or '/delete_pdf' in request.path:
             print(f"Returning JSON response for {request.path} request")
             return jsonify({
                 "success": False, 

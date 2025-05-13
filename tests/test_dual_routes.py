@@ -22,7 +22,6 @@ class DualRoutesTest(unittest.TestCase):
             'SECRET_KEY': 'test_key',
             'WTF_CSRF_ENABLED': False,  # Disable CSRF for testing
             'DATABASE': self.db_path,  # Add this for init_db to work
-            'BACKUP_DIR': 'files_db_backups',  # Add these for the index route
             'REPORTS_DIR': 'files_roster_reports',
             'DB_PATH': 'instance/clerk.sqlite3'  # Add this for database operations
         })
