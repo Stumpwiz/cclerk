@@ -21,6 +21,57 @@
                     // Focus on the new header field
                     document.getElementById('new_header').focus();
                 });
+
+                // Handle the generate letter form submission
+                document.getElementById('generateLetterForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // Get the button and disable it
+                    const button = document.getElementById('generateLetterBtn');
+                    button.disabled = true;
+                    const originalText = button.innerHTML;
+                    button.innerHTML = 'Generating...';
+
+                    // Get form data
+                    const formData = new FormData(this);
+
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    // Make AJAX request
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Re-enable button
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+
+                        if (data.success) {
+                            // Show success message
+                            alert('Letter generated successfully! Use the buttons above to view, print, or delete the PDF.');
+
+                            // Refresh the PDF files list
+                            location.reload();
+                        } else {
+                            // Show error message
+                            alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        // Re-enable button
+                        button.disabled = false;
+                        button.innerHTML = originalText;
+
+                        // Show error message
+                        alert('Failed to generate PDF: ' + error);
+                    });
+                });
             });
         </script>
 
@@ -32,7 +83,7 @@
                         <h3>Generate Letter</h3>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="{{ url_for('letters.generate_letter') }}">
+                        <form id="generateLetterForm" method="POST" action="{{ url_for('letters.generate_letter') }}">
                             {{ form.csrf_token }}
                             <div class="mb-3">
                                 <label for="recipient" class="form-label">Recipient(s)</label>
@@ -47,7 +98,7 @@
                                 <label for="apartment" class="form-label">Apartment</label>
                                 <input type="text" class="form-control" id="apartment" name="apartment" required>
                             </div>
-                            <button type="submit" class="btn btn-success">Generate Letter</button>
+                            <button type="submit" id="generateLetterBtn" class="btn btn-success">Generate Letter</button>
                         </form>
                     </div>
                 </div>

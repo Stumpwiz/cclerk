@@ -402,114 +402,6 @@
                 });
             }
 
-            // Add an event handler for the Delete PDF button
-            const deletePdfButton = document.getElementById('btn_delete_pdf');
-            if (deletePdfButton) {
-                deletePdfButton.addEventListener('click', function () {
-                    // Get the selected file from the list
-                    const filesList = document.getElementById('pdfFilesList');
-                    const selectedFile = filesList.querySelector('.active');
-
-                    // Check if a file is selected
-                    if (!selectedFile) {
-                        alert('Please select a PDF file to delete');
-                        return;
-                    }
-
-                    // Confirm deletion
-                    if (!confirm('Are you sure you want to delete this PDF? This action cannot be undone.')) {
-                        return;
-                    }
-
-                    // Show the loading indicator or disable button
-                    this.disabled = true;
-                    const originalText = this.innerHTML;
-                    this.innerHTML = 'Deleting...';
-
-                    // Get CSRF token from meta tag
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    // Check if CSRF token is valid
-                    if (!csrfToken || csrfToken.trim() === '') {
-                        console.error('CSRF token is empty or invalid');
-                        alert('CSRF token is missing or invalid. Please refresh the page and try again.');
-                        this.disabled = false;
-                        this.innerHTML = originalText;
-                        return;
-                    }
-
-                    // Make AJAX request to delete_file endpoint
-                    fetch('/delete_file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({
-                            filename: selectedFile.textContent.trim()
-                        }),
-                        credentials: 'same-origin'
-                    })
-                        .then(response => {
-                            // Always try to parse the response as text first
-                            return response.text().then(text => {
-                                // Try to parse the text as JSON
-                                try {
-                                    const data = JSON.parse(text);
-
-                                    // If parsing succeeds, check if the response was ok
-                                    if (!response.ok) {
-                                        throw new Error(data.error || data.details || 'Server returned an error');
-                                    }
-                                    return data;
-                                } catch (e) {
-                                    // If JSON parsing fails, check if it's HTML
-                                    if (text.includes('<!doctype') || text.includes('<html')) {
-                                        throw new Error('Server returned an HTML page instead of JSON. Please check your CSRF token.');
-                                    }
-                                    // If it's not HTML, just return the text as the error
-                                    throw new Error(text || 'Unknown error');
-                                }
-                            });
-                        })
-                        .then(data => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            if (data.success) {
-                                // Remove the file from the list
-                                selectedFile.remove();
-
-                                // Select the first item if available
-                                if (filesList.children.length > 0) {
-                                    filesList.children[0].classList.add('active');
-                                    // Update the hidden input field for the View form
-                                    document.getElementById('view_pdf_file').value = filesList.children[0].textContent.trim();
-                                } else {
-                                    // Clear the hidden input field if no files are left
-                                    document.getElementById('view_pdf_file').value = '';
-                                }
-
-                                // Show the success message
-                                alert('File deleted successfully');
-                            } else {
-                                // Show the error message
-                                alert('Failed to delete file: ' + data.error);
-                            }
-                        })
-                        .catch(error => {
-                            // Re-enable button
-                            this.disabled = false;
-                            this.innerHTML = originalText;
-
-                            // Show the error message
-                            alert('Failed to delete file: ' + error);
-                        });
-                });
-            }
 
             // View SQL button handler removed as per requirements
 
@@ -602,20 +494,15 @@
                                         </div>
                                         <!-- Action Buttons -->
                                         <div class="row">
-                                            <div class="col-6 mb-2">
+                                            <div class="col-12 mb-2 text-center">
                                                 <form method="POST" action="{{ url_for('main.view_pdf') }}"
                                                       target="_blank">
                                                     {{ form.csrf_token }}
                                                     <input type="hidden" id="view_pdf_file" name="pdf_file" value="">
                                                     <button type="submit" id="btn_view_pdf"
-                                                            class="btn btn-sm btn-primary w-100">View
+                                                            class="btn btn-sm btn-primary w-50">View
                                                     </button>
                                                 </form>
-                                            </div>
-                                            <div class="col-6">
-                                                <button type="button" id="btn_delete_pdf"
-                                                        class="btn btn-sm btn-danger w-100">Delete
-                                                </button>
                                             </div>
                                         </div>
                                     </div>

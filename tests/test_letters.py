@@ -122,10 +122,14 @@ def test_generate_letter(authenticated_client, app):
                     "recipient": "John Smith",
                     "salutation": "Dear John",
                     "apartment": "101"
-                }, follow_redirects=True)
+                })
 
                 assert response.status_code == 200
-                assert b"Letter for John Smith generated successfully!" in response.data
+                # Check for JSON response with success status
+                json_data = response.get_json()
+                assert json_data is not None
+                assert json_data['success'] is True
+                assert json_data['filename'] == "Smith.pdf"
 
                 # Check that the PDF file was created
                 assert os.path.exists(pdf_path)

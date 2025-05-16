@@ -131,50 +131,6 @@ def view_pdf():
         return redirect(url_for('main.index'))
 
 
-
-@main_bp.route("/delete_file", methods=["POST"])
-@handle_errors
-def delete_file():
-    try:
-        # Check if the Content-Type header indicates JSON
-        content_type = request.headers.get('Content-Type', '')
-        is_json_content = 'application/json' in content_type
-
-        # Try to get the filename from different sources based on content type
-        filename = None
-        if is_json_content and request.is_json:
-            # Get filename from JSON body
-            filename = request.json.get("filename")
-        elif request.form:
-            # Get filename from form data
-            filename = request.form.get("filename")
-        elif request.data:
-            # Try to parse the raw data as JSON
-            try:
-                data = json.loads(request.data)
-                filename = data.get("filename")
-            except:
-                pass
-
-        if not filename:
-            return jsonify({"success": False, "error": "Filename is required"}), 400
-
-        valid, result = validate_file_exists(filename)
-
-        if not valid:
-            return jsonify({"success": False, "error": result}), 400
-
-        file_path = result
-
-        # Delete the file
-        os.remove(file_path)
-        return jsonify({"success": True, "message": f"File {filename} deleted successfully"})
-
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
-
 @main_bp.route("/favicon.ico")
 @handle_errors
 def favicon():

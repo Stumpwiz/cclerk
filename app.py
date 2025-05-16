@@ -93,7 +93,7 @@ def create_app(test_config=None):
             print("CSRF token not found in form data")
 
         # Always return JSON for any delete requests, regardless of method
-        if '/delete_file' in request.path or '/delete_pdf' in request.path:
+        if '/delete_pdf' in request.path:
             print(f"Returning JSON response for {request.path} request")
             return jsonify({
                 "success": False, 

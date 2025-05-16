@@ -179,8 +179,7 @@ def generate_letter():
     template = LetterTemplate.get_singleton()
 
     if not template:
-        flash('No template found. Please create a template first.', 'danger')
-        return redirect(url_for('letters.get_letters_html'))
+        return {'success': False, 'error': 'No template found. Please create a template first.'}
 
     # Extract the last name from the recipient field (last word)
     last_name = recipient.split()[-1]
@@ -248,10 +247,6 @@ def generate_letter():
 
             # Now check if we have a PDF file
             if os.path.exists(temp_pdf_path):
-                # Success message without opening the PDF
-                flash(
-                    f'Letter for {recipient} generated successfully! Use the buttons above to view, print, or delete the PDF.',
-                    'success')
 
                 # Clean up LaTeX auxiliary files
                 # print("Cleaning up LaTeX auxiliary files...")
@@ -284,15 +279,15 @@ def generate_letter():
                     except Exception:
                         pass
 
-                flash('Failed to generate PDF. Please check the LaTeX template and server logs for more information.',
-                      'danger')
+                return {'success': False, 'error': 'Failed to generate PDF. Please check the LaTeX template and server logs for more information.'}
         except subprocess.CalledProcessError as e:
-            flash(f'Error generating PDF: {e}', 'danger')
+            return {'success': False, 'error': f'Error generating PDF: {e}'}
         except Exception as e:
-            flash(f'Unexpected error: {e}', 'danger')
+            return {'success': False, 'error': f'Unexpected error: {e}'}
     except Exception as e:
-        flash(f'Unexpected error: {e}', 'danger')
+        return {'success': False, 'error': f'Unexpected error: {e}'}
         # No need to clean up the files_letters directory as it's a permanent directory
         # The LaTeX files will be overwritten on later letter generations
 
-    return redirect(url_for('letters.get_letters_html'))
+    # If we reach here, the PDF was generated successfully
+    return {'success': True, 'filename': f"{last_name}.pdf"}
