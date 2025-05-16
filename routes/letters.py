@@ -221,7 +221,6 @@ def generate_letter():
         temp_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
 
         try:
-            # Run xelatex to generate the PDF using a simpler approach
             # Use xelatex from the system PATH instead of hard-coding the path
             # print(f"Running xelatex...")
             result = subprocess.run(
@@ -239,7 +238,7 @@ def generate_letter():
                 current_app.logger.error("PDF file not generated. Check LaTeX logs for errors.")
                 if result.returncode != 0:
                     current_app.logger.error(f"xelatex failed with return code: {result.returncode}")
-                    # Extract error messages from output
+                    # Extract error messages from the output
                     if "! " in result.stdout:
                         error_lines = [line for line in result.stdout.split('\n') if "! " in line]
                         for error_line in error_lines:
@@ -263,6 +262,9 @@ def generate_letter():
                             os.remove(file_path)
                         except Exception as del_error:
                             current_app.logger.error(f"Error deleting auxiliary file {file}: {del_error}")
+
+                # If we reach here, the PDF was generated successfully
+                return {'success': True, 'filename': f"{last_name}.pdf"}
             else:
                 # Check for log files that might contain error information
                 log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]
@@ -288,6 +290,3 @@ def generate_letter():
         return {'success': False, 'error': f'Unexpected error: {e}'}
         # No need to clean up the files_letters directory as it's a permanent directory
         # The LaTeX files will be overwritten on later letter generations
-
-    # If we reach here, the PDF was generated successfully
-    return {'success': True, 'filename': f"{last_name}.pdf"}
