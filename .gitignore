@@ -21,7 +21,7 @@
   *.log
 
   # Migrations
-  .migrations/*
+ migrations/*
 /SSL Server Test_ clerk.mrrc.online.pdf
 /qualysTest.png
 /security_recommendations.md
