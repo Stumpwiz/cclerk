@@ -2,10 +2,9 @@ from flask import Blueprint, render_template, redirect, url_for, session, send_f
     current_app
 import os
 import subprocess
-from extensions import db, csrf
-from utils.file_handlers import get_file_path, validate_file_exists, serve_file, check_directory_for_files
+from utils.file_handlers import validate_file_exists, serve_file, check_directory_for_files
 from forms import CSRFForm
-from routes.decorators import handle_errors
+from utils.decorators import handle_errors
 
 # Define a blueprint for main routes
 main_bp = Blueprint('main', __name__)

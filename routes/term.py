@@ -4,7 +4,7 @@ from models.person import Person
 from models.office import Office
 from extensions import db
 from datetime import datetime
-from routes.decorators import handle_errors, login_required
+from utils.decorators import handle_errors, login_required
 
 # Define a blueprint for the "term" feature
 term_bp = Blueprint('term', __name__)

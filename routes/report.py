@@ -4,7 +4,7 @@ from flask import Blueprint, current_app
 from models.report_record import ReportRecord
 from jinja2 import Environment, FileSystemLoader
 import subprocess
-from routes.decorators import handle_errors, login_required
+from utils.decorators import handle_errors, login_required
 
 # Define the blueprint for all report-related routes
 report_bp = Blueprint("report", __name__, url_prefix="/report")

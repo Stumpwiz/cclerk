@@ -5,7 +5,7 @@ import re
 from extensions import db
 from models.letters import LetterTemplate
 from forms import CSRFForm
-from routes.decorators import handle_errors
+from utils.decorators import handle_errors
 
 
 def sanitize_latex(content):
@@ -281,7 +281,8 @@ def generate_letter():
                     except Exception:
                         pass
 
-                return {'success': False, 'error': 'Failed to generate PDF. Please check the LaTeX template and server logs for more information.'}
+                return {'success': False,
+                        'error': 'Failed to generate PDF. Please check the LaTeX template and server logs for more information.'}
         except subprocess.CalledProcessError as e:
             return {'success': False, 'error': f'Error generating PDF: {e}'}
         except Exception as e:

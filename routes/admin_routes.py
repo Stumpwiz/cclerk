@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, redirect, url_for, flash, session
 from models.user import User
 from extensions import db
-from routes.decorators import role_required, handle_errors
+from utils.decorators import role_required, handle_errors
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, HiddenField, ValidationError
+from wtforms import StringField, PasswordField, SelectField, ValidationError
 from wtforms.validators import DataRequired, Length, EqualTo
 import re
 

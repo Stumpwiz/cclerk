@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from models.person import Person
 from extensions import db
 from sqlalchemy.exc import IntegrityError
-from routes.decorators import handle_errors, login_required
+from utils.decorators import handle_errors, login_required
 
 # Define a blueprint for the "person" feature
 person_bp = Blueprint('person', __name__)

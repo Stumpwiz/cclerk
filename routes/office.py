@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from models.office import Office
 from models.body import Body
 from extensions import db
-from routes.decorators import handle_errors, login_required
+from utils.decorators import handle_errors, login_required
 
 # Define a blueprint for the "office" feature
 office_bp = Blueprint('office', __name__)

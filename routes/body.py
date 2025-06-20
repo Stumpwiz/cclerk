@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template, redirect, url_fo
 from models.body import Body
 from extensions import db
 from forms import CSRFForm
-from routes.decorators import handle_errors, login_required
+from utils.decorators import handle_errors, login_required
 
 # Define a blueprint for the "body" feature
 body_bp = Blueprint('body', __name__)
