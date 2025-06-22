@@ -1,4 +1,4 @@
-from flask import Flask, current_app, render_template
+from flask import Flask, render_template
 
 from config import Config
 from extensions import db, migrate, csrf
@@ -6,13 +6,8 @@ from routes import register_blueprints
 
 from dotenv import load_dotenv
 import os
-import json
-import shutil
-import subprocess
-import datetime
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
-
 
 
 def create_app(test_config=None):
@@ -35,7 +30,6 @@ def create_app(test_config=None):
     migrate.init_app(app, db)
     csrf.init_app(app)
 
-
     # Routes are now defined in blueprint files in the routes/ directory
     # - Main routes (/, /favicon.ico) are in routes/main_routes.py
     # - Authentication routes (/login, /logout) are in routes/auth_routes.py
@@ -53,7 +47,6 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()  # Create all tables (like the "users" table)
-
 
     # Register error handlers
     @app.errorhandler(404)
@@ -96,8 +89,8 @@ def create_app(test_config=None):
         if '/delete_pdf' in request.path:
             print(f"Returning JSON response for {request.path} request")
             return jsonify({
-                "success": False, 
-                "error": "CSRF token validation failed", 
+                "success": False,
+                "error": "CSRF token validation failed",
                 "details": str(e),
                 "path": request.path,
                 "method": request.method
@@ -114,7 +107,8 @@ def create_app(test_config=None):
         # Check if the request is from the home page
         is_home_request = False
         if request.referrer:
-            referrer_path = request.referrer.split('://')[-1].split('/', 1)[-1] if '/' in request.referrer.split('://')[-1] else ''
+            referrer_path = request.referrer.split('://')[-1].split('/', 1)[-1] if '/' in request.referrer.split('://')[
+                -1] else ''
             is_home_request = referrer_path == ''
 
         if request.is_json or 'application/json' in content_type or is_ajax or accepts_json or is_fetch_request or is_home_request:

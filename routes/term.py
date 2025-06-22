@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from models.term import Term
 from models.person import Person
 from models.office import Office
-from extensions import db
+from extensions import db, csrf
 from datetime import datetime
 from utils.decorators import handle_errors, login_required
 
@@ -54,8 +54,6 @@ def get_terms():
         "body_name": term.office.body.name if term.office and term.office.body else None,
         "office_title": term.office.title if term.office else None
     } for term in terms])
-
-
 
 
 @term_bp.route('/add', methods=['POST'])
@@ -196,7 +194,7 @@ def update_term():
         "office_title": term.office.title
     })
 
-
+@csrf.exempt
 @term_bp.route('/delete', methods=['DELETE'])
 @handle_errors
 def delete_term():

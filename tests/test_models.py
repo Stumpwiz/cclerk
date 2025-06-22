@@ -1,7 +1,7 @@
 # tests/test_models.py
 
 import pytest
-from datetime import date
+from datetime import date, datetime
 from extensions import db
 from models.body import Body
 from models.office import Office
@@ -107,7 +107,8 @@ class TestPersonModel:
     def test_create_person(self, app):
         """Test creating a Person."""
         with app.app_context():
-            person = Person(person_id=100, first='Test', last='Person', email='test@example.com', phone='(123) 456-7890', apt='101')
+            person = Person(person_id=100, first='Test', last='Person', email='test@example.com',
+                            phone='(123) 456-7890', apt='101')
             db.session.add(person)
             db.session.commit()
 
@@ -146,10 +147,10 @@ class TestTermModel:
         with app.app_context():
             # Use a different person-office combination to avoid unique constraint violation
             term = Term(
-                term_person_id=1, 
-                term_office_id=2, 
-                start=date(2023, 1, 1), 
-                end=date(2025, 12, 31), 
+                term_person_id=1,
+                term_office_id=2,
+                start=date(2023, 1, 1),
+                end=date(2025, 12, 31),
                 ordinal='4th'
             )
             db.session.add(term)
@@ -199,6 +200,81 @@ class TestTermModel:
 
             # Rollback the session
             db.session.rollback()
+
+    def test_edit_term(self, app, test_data):
+        """Test editing a term's attributes"""
+        with app.app_context():
+            # Get an existing term
+            term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert term is not None
+
+            # Test updating start date
+            new_start = datetime(2025, 1, 1).date()
+            term.start = new_start
+            db.session.commit()
+            updated_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert updated_term.start == new_start
+
+            # Test updating end date
+            new_end = datetime(2025, 12, 31).date()
+            term.end = new_end
+            db.session.commit()
+            updated_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert updated_term.end == new_end
+
+            # Test updating ordinal
+            new_ordinal = "2nd"
+            term.ordinal = new_ordinal
+            db.session.commit()
+            updated_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert updated_term.ordinal == new_ordinal
+
+            # Test setting fields to None
+            term.start = None
+            term.end = None
+            term.ordinal = None
+            db.session.commit()
+            updated_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert updated_term.start is None
+            assert updated_term.end is None
+            assert updated_term.ordinal is None
+
+    def test_delete_term(self, app, test_data):
+        """Test deleting a term"""
+        with app.app_context():
+            # Verify the term exists first
+            term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert term is not None
+
+            # Delete the term
+            db.session.delete(term)
+            db.session.commit()
+
+            # Verify the term was deleted
+            deleted_term = Term.query.filter_by(term_person_id=1, term_office_id=1).first()
+            assert deleted_term is None
+
+            # Verify the associated Person and Office still exist
+            person = Person.query.get(1)
+            office = Office.query.get(1)
+            assert person is not None
+            assert office is not None
+
+            # Create a new term to test cascade behavior
+            new_term = Term(
+                term_person_id=person.person_id,
+                term_office_id=office.office_id,
+                start=datetime(2025, 1, 1).date(),
+                end=datetime(2025, 12, 31).date()
+            )
+            db.session.add(new_term)
+            db.session.commit()
+
+            # Verify the new term was created
+            assert Term.query.filter_by(
+                term_person_id=person.person_id,
+                term_office_id=office.office_id
+            ).first() is not None
 
 
 class TestReportRecordView:
