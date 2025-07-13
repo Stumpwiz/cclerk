@@ -72,8 +72,9 @@ def add_body():
     })
 
 
-@body_bp.route('/update', methods=['PUT'])
+@body_bp.route('/update', methods=['POST'])
 @handle_errors
+@login_required
 def update_body():
     """
     Update an existing body.
@@ -110,15 +111,21 @@ def update_body():
     })
 
 
-@body_bp.route('/delete', methods=['DELETE'])
+@body_bp.route('/delete', methods=['POST'])
 @handle_errors
+@login_required
 def delete_body():
     """
     Delete a body.
     This route handles API requests and returns JSON.
     For web interface, use the delete_body_html route.
     """
-    body_id = request.args.get('id')
+    # Check if request contains valid JSON data
+    if request.is_json:
+        data = request.json
+        body_id = data.get('id')
+    else:
+        body_id = request.args.get('id')
 
     if not body_id:
         return jsonify({"error": "Body ID is required"}), 400

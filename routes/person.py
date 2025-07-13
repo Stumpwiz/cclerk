@@ -83,8 +83,9 @@ def add_person():
         return jsonify({"success": False, "error": "An error occurred while creating the person"}), 400
 
 
-@person_bp.route('/update', methods=['PUT'])
+@person_bp.route('/update', methods=['POST'])
 @handle_errors
+@login_required
 def update_person():
     """Update an existing person"""
     # Check if request contains valid JSON data
@@ -128,11 +129,17 @@ def update_person():
         return jsonify({"error": "An error occurred while updating the person"}), 400
 
 
-@person_bp.route('/delete', methods=['DELETE'])
+@person_bp.route('/delete', methods=['POST'])
 @handle_errors
+@login_required
 def delete_person():
     """Delete a person"""
-    person_id = request.args.get('id')
+    # Check if request contains valid JSON data
+    if request.is_json:
+        data = request.json
+        person_id = data.get('id')
+    else:
+        person_id = request.args.get('id')
 
     if not person_id:
         return jsonify({"error": "Person ID is required"}), 400

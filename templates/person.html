@@ -395,7 +395,7 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             fetch('/api/person/update', {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
@@ -452,11 +452,15 @@
                 // Get the CSRF token from the meta tag
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                fetch(`/api/person/delete?id=${personId}`, {
-                    method: 'DELETE',
+                fetch('/api/person/delete', {
+                    method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
-                    }
+                    },
+                    body: JSON.stringify({
+                        id: personId
+                    })
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -466,8 +470,9 @@
                     }
                     return response.json();
                 })
-                .then(() => {
+                .then(data => {
                     fetchPersons();
+                    alert('Person deleted successfully');
                 })
                 .catch(error => {
                     alert(error.message || 'Error deleting person');

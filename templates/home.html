@@ -11,7 +11,7 @@
                 alert('CSRF token is missing or invalid. Please refresh the page and try again.');
             }
             // Set up report buttons to navigate to their respective routes
-            document.getElementById('btn_long_form').addEventListener('click', function() {
+            document.getElementById('btn_long_form').addEventListener('click', function () {
                 // Disable the button to prevent multiple clicks
                 this.disabled = true;
                 const originalText = this.innerHTML;
@@ -28,74 +28,74 @@
                         'X-CSRFToken': csrfToken
                     },
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
+                    .then(response => response.json())
+                    .then(data => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                    if (data.success) {
-                        const filename = data.filename;
-                        const filesList = document.getElementById('pdfFilesList');
+                        if (data.success) {
+                            const filename = data.filename;
+                            const filesList = document.getElementById('pdfFilesList');
 
-                        // Check if the file is already in the list
-                        let fileItem = null;
-                        let fileExists = false;
-                        const fileItems = filesList.querySelectorAll('a');
+                            // Check if the file is already in the list
+                            let fileItem = null;
+                            let fileExists = false;
+                            const fileItems = filesList.querySelectorAll('a');
 
-                        fileItems.forEach(function(item) {
-                            if (item.textContent.trim() === filename) {
-                                fileItem = item;
-                                fileExists = true;
-                            }
-                        });
-
-                        // If the file doesn't exist in the list, add it
-                        if (!fileExists) {
-                            fileItem = document.createElement('a');
-                            fileItem.href = '#';
-                            fileItem.className = 'list-group-item list-group-item-action';
-                            fileItem.textContent = filename;
-                            filesList.appendChild(fileItem);
-
-                            // Add click event listener to the new file item
-                            fileItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                // Remove the active class from all items
-                                filesList.querySelectorAll('a').forEach(function(i) {
-                                    i.classList.remove('active');
-                                });
-                                // Add active class to clicked item
-                                this.classList.add('active');
-                                // Update the hidden input field for the View form
-                                document.getElementById('view_pdf_file').value = this.textContent.trim();
+                            fileItems.forEach(function (item) {
+                                if (item.textContent.trim() === filename) {
+                                    fileItem = item;
+                                    fileExists = true;
+                                }
                             });
+
+                            // If the file doesn't exist in the list, add it
+                            if (!fileExists) {
+                                fileItem = document.createElement('a');
+                                fileItem.href = '#';
+                                fileItem.className = 'list-group-item list-group-item-action';
+                                fileItem.textContent = filename;
+                                filesList.appendChild(fileItem);
+
+                                // Add click event listener to the new file item
+                                fileItem.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    // Remove the active class from all items
+                                    filesList.querySelectorAll('a').forEach(function (i) {
+                                        i.classList.remove('active');
+                                    });
+                                    // Add active class to clicked item
+                                    this.classList.add('active');
+                                    // Update the hidden input field for the View form
+                                    document.getElementById('view_pdf_file').value = this.textContent.trim();
+                                });
+                            }
+
+                            // Select the file in the list
+                            filesList.querySelectorAll('a').forEach(function (i) {
+                                i.classList.remove('active');
+                            });
+                            fileItem.classList.add('active');
+
+                            // Update the hidden input field for the View form
+                            document.getElementById('view_pdf_file').value = filename;
+                        } else {
+                            // Show the error message
+                            alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                         }
+                    })
+                    .catch(error => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                        // Select the file in the list
-                        filesList.querySelectorAll('a').forEach(function(i) {
-                            i.classList.remove('active');
-                        });
-                        fileItem.classList.add('active');
-
-                        // Update the hidden input field for the View form
-                        document.getElementById('view_pdf_file').value = filename;
-                    } else {
                         // Show the error message
-                        alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-
-                    // Show the error message
-                    alert('Failed to generate PDF: ' + error);
-                });
+                        alert('Failed to generate PDF: ' + error);
+                    });
             });
 
-            document.getElementById('btn_short_form').addEventListener('click', function() {
+            document.getElementById('btn_short_form').addEventListener('click', function () {
                 // Disable the button to prevent multiple clicks
                 this.disabled = true;
                 const originalText = this.innerHTML;
@@ -112,74 +112,74 @@
                         'X-CSRFToken': csrfToken
                     },
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
+                    .then(response => response.json())
+                    .then(data => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                    if (data.success) {
-                        const filename = data.filename;
-                        const filesList = document.getElementById('pdfFilesList');
+                        if (data.success) {
+                            const filename = data.filename;
+                            const filesList = document.getElementById('pdfFilesList');
 
-                        // Check if the file is already in the list
-                        let fileItem = null;
-                        let fileExists = false;
-                        const fileItems = filesList.querySelectorAll('a');
+                            // Check if the file is already in the list
+                            let fileItem = null;
+                            let fileExists = false;
+                            const fileItems = filesList.querySelectorAll('a');
 
-                        fileItems.forEach(function(item) {
-                            if (item.textContent.trim() === filename) {
-                                fileItem = item;
-                                fileExists = true;
-                            }
-                        });
-
-                        // If the file doesn't exist in the list, add it
-                        if (!fileExists) {
-                            fileItem = document.createElement('a');
-                            fileItem.href = '#';
-                            fileItem.className = 'list-group-item list-group-item-action';
-                            fileItem.textContent = filename;
-                            filesList.appendChild(fileItem);
-
-                            // Add click event listener to the new file item
-                            fileItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                // Remove the active class from all items
-                                filesList.querySelectorAll('a').forEach(function(i) {
-                                    i.classList.remove('active');
-                                });
-                                // Add active class to clicked item
-                                this.classList.add('active');
-                                // Update the hidden input field for the View form
-                                document.getElementById('view_pdf_file').value = this.textContent.trim();
+                            fileItems.forEach(function (item) {
+                                if (item.textContent.trim() === filename) {
+                                    fileItem = item;
+                                    fileExists = true;
+                                }
                             });
+
+                            // If the file doesn't exist in the list, add it
+                            if (!fileExists) {
+                                fileItem = document.createElement('a');
+                                fileItem.href = '#';
+                                fileItem.className = 'list-group-item list-group-item-action';
+                                fileItem.textContent = filename;
+                                filesList.appendChild(fileItem);
+
+                                // Add click event listener to the new file item
+                                fileItem.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    // Remove the active class from all items
+                                    filesList.querySelectorAll('a').forEach(function (i) {
+                                        i.classList.remove('active');
+                                    });
+                                    // Add active class to clicked item
+                                    this.classList.add('active');
+                                    // Update the hidden input field for the View form
+                                    document.getElementById('view_pdf_file').value = this.textContent.trim();
+                                });
+                            }
+
+                            // Select the file in the list
+                            filesList.querySelectorAll('a').forEach(function (i) {
+                                i.classList.remove('active');
+                            });
+                            fileItem.classList.add('active');
+
+                            // Update the hidden input field for the View form
+                            document.getElementById('view_pdf_file').value = filename;
+                        } else {
+                            // Show the error message
+                            alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                         }
+                    })
+                    .catch(error => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                        // Select the file in the list
-                        filesList.querySelectorAll('a').forEach(function(i) {
-                            i.classList.remove('active');
-                        });
-                        fileItem.classList.add('active');
-
-                        // Update the hidden input field for the View form
-                        document.getElementById('view_pdf_file').value = filename;
-                    } else {
                         // Show the error message
-                        alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-
-                    // Show the error message
-                    alert('Failed to generate PDF: ' + error);
-                });
+                        alert('Failed to generate PDF: ' + error);
+                    });
             });
 
-            document.getElementById('btn_vacancies').addEventListener('click', function() {
+            document.getElementById('btn_vacancies').addEventListener('click', function () {
                 // Disable the button to prevent multiple clicks
                 this.disabled = true;
                 const originalText = this.innerHTML;
@@ -196,74 +196,74 @@
                         'X-CSRFToken': csrfToken
                     },
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
+                    .then(response => response.json())
+                    .then(data => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                    if (data.success) {
-                        const filename = data.filename;
-                        const filesList = document.getElementById('pdfFilesList');
+                        if (data.success) {
+                            const filename = data.filename;
+                            const filesList = document.getElementById('pdfFilesList');
 
-                        // Check if the file is already in the list
-                        let fileItem = null;
-                        let fileExists = false;
-                        const fileItems = filesList.querySelectorAll('a');
+                            // Check if the file is already in the list
+                            let fileItem = null;
+                            let fileExists = false;
+                            const fileItems = filesList.querySelectorAll('a');
 
-                        fileItems.forEach(function(item) {
-                            if (item.textContent.trim() === filename) {
-                                fileItem = item;
-                                fileExists = true;
-                            }
-                        });
-
-                        // If the file doesn't exist in the list, add it
-                        if (!fileExists) {
-                            fileItem = document.createElement('a');
-                            fileItem.href = '#';
-                            fileItem.className = 'list-group-item list-group-item-action';
-                            fileItem.textContent = filename;
-                            filesList.appendChild(fileItem);
-
-                            // Add click event listener to the new file item
-                            fileItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                // Remove the active class from all items
-                                filesList.querySelectorAll('a').forEach(function(i) {
-                                    i.classList.remove('active');
-                                });
-                                // Add active class to clicked item
-                                this.classList.add('active');
-                                // Update the hidden input field for the View form
-                                document.getElementById('view_pdf_file').value = this.textContent.trim();
+                            fileItems.forEach(function (item) {
+                                if (item.textContent.trim() === filename) {
+                                    fileItem = item;
+                                    fileExists = true;
+                                }
                             });
+
+                            // If the file doesn't exist in the list, add it
+                            if (!fileExists) {
+                                fileItem = document.createElement('a');
+                                fileItem.href = '#';
+                                fileItem.className = 'list-group-item list-group-item-action';
+                                fileItem.textContent = filename;
+                                filesList.appendChild(fileItem);
+
+                                // Add click event listener to the new file item
+                                fileItem.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    // Remove the active class from all items
+                                    filesList.querySelectorAll('a').forEach(function (i) {
+                                        i.classList.remove('active');
+                                    });
+                                    // Add active class to clicked item
+                                    this.classList.add('active');
+                                    // Update the hidden input field for the View form
+                                    document.getElementById('view_pdf_file').value = this.textContent.trim();
+                                });
+                            }
+
+                            // Select the file in the list
+                            filesList.querySelectorAll('a').forEach(function (i) {
+                                i.classList.remove('active');
+                            });
+                            fileItem.classList.add('active');
+
+                            // Update the hidden input field for the View form
+                            document.getElementById('view_pdf_file').value = filename;
+                        } else {
+                            // Show the error message
+                            alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                         }
+                    })
+                    .catch(error => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                        // Select the file in the list
-                        filesList.querySelectorAll('a').forEach(function(i) {
-                            i.classList.remove('active');
-                        });
-                        fileItem.classList.add('active');
-
-                        // Update the hidden input field for the View form
-                        document.getElementById('view_pdf_file').value = filename;
-                    } else {
                         // Show the error message
-                        alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-
-                    // Show the error message
-                    alert('Failed to generate PDF: ' + error);
-                });
+                        alert('Failed to generate PDF: ' + error);
+                    });
             });
 
-            document.getElementById('btn_expiring').addEventListener('click', function() {
+            document.getElementById('btn_expiring').addEventListener('click', function () {
                 // Disable the button to prevent multiple clicks
                 this.disabled = true;
                 const originalText = this.innerHTML;
@@ -280,73 +280,72 @@
                         'X-CSRFToken': csrfToken
                     },
                 })
-                .then(response => response.json())
-                .then(data => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
+                    .then(response => response.json())
+                    .then(data => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                    if (data.success) {
-                        const filename = data.filename;
-                        const filesList = document.getElementById('pdfFilesList');
+                        if (data.success) {
+                            const filename = data.filename;
+                            const filesList = document.getElementById('pdfFilesList');
 
-                        // Check if the file is already in the list
-                        let fileItem = null;
-                        let fileExists = false;
-                        const fileItems = filesList.querySelectorAll('a');
+                            // Check if the file is already in the list
+                            let fileItem = null;
+                            let fileExists = false;
+                            const fileItems = filesList.querySelectorAll('a');
 
-                        fileItems.forEach(function(item) {
-                            if (item.textContent.trim() === filename) {
-                                fileItem = item;
-                                fileExists = true;
-                            }
-                        });
-
-                        // If the file doesn't exist in the list, add it
-                        if (!fileExists) {
-                            fileItem = document.createElement('a');
-                            fileItem.href = '#';
-                            fileItem.className = 'list-group-item list-group-item-action';
-                            fileItem.textContent = filename;
-                            filesList.appendChild(fileItem);
-
-                            // Add click event listener to the new file item
-                            fileItem.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                // Remove the active class from all items
-                                filesList.querySelectorAll('a').forEach(function(i) {
-                                    i.classList.remove('active');
-                                });
-                                // Add active class to clicked item
-                                this.classList.add('active');
-                                // Update the hidden input field for the View form
-                                document.getElementById('view_pdf_file').value = this.textContent.trim();
+                            fileItems.forEach(function (item) {
+                                if (item.textContent.trim() === filename) {
+                                    fileItem = item;
+                                    fileExists = true;
+                                }
                             });
+
+                            // If the file doesn't exist in the list, add it
+                            if (!fileExists) {
+                                fileItem = document.createElement('a');
+                                fileItem.href = '#';
+                                fileItem.className = 'list-group-item list-group-item-action';
+                                fileItem.textContent = filename;
+                                filesList.appendChild(fileItem);
+
+                                // Add click event listener to the new file item
+                                fileItem.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    // Remove the active class from all items
+                                    filesList.querySelectorAll('a').forEach(function (i) {
+                                        i.classList.remove('active');
+                                    });
+                                    // Add active class to clicked item
+                                    this.classList.add('active');
+                                    // Update the hidden input field for the View form
+                                    document.getElementById('view_pdf_file').value = this.textContent.trim();
+                                });
+                            }
+
+                            // Select the file in the list
+                            filesList.querySelectorAll('a').forEach(function (i) {
+                                i.classList.remove('active');
+                            });
+                            fileItem.classList.add('active');
+
+                            // Update the hidden input field for the View form
+                            document.getElementById('view_pdf_file').value = filename;
+                        } else {
+                            // Show the error message
+                            alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
                         }
+                    })
+                    .catch(error => {
+                        // Re-enable button
+                        this.disabled = false;
+                        this.innerHTML = originalText;
 
-                        // Select the file in the list
-                        filesList.querySelectorAll('a').forEach(function(i) {
-                            i.classList.remove('active');
-                        });
-                        fileItem.classList.add('active');
-
-                        // Update the hidden input field for the View form
-                        document.getElementById('view_pdf_file').value = filename;
-                    } else {
                         // Show the error message
-                        alert('Failed to generate PDF: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    // Re-enable button
-                    this.disabled = false;
-                    this.innerHTML = originalText;
-
-                    // Show the error message
-                    alert('Failed to generate PDF: ' + error);
-                });
+                        alert('Failed to generate PDF: ' + error);
+                    });
             });
-
 
 
             // Make PDF files list items selectable
@@ -403,8 +402,9 @@
             }
 
 
-            // View SQL button handler removed as per requirements
-
+            // Initialize all tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
         });
     </script>
     <style>
@@ -422,13 +422,14 @@
             height: 100%;
         }
 
-        .favicon-container {
+        .erd-container {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
         }
 
-        .favicon-img {
+        .erd-img {
             max-width: 100%;
             height: auto;
         }
@@ -439,7 +440,7 @@
                 flex-direction: column;
             }
 
-            #favicon_column {
+            #erd_column {
                 order: 1;
                 margin-bottom: 20px;
             }
@@ -448,14 +449,30 @@
                 order: 2;
             }
         }
+
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+
+        .btn-equal-width {
+            width: 100%;
+            text-align: center;
+        }
     </style>
     <div class="container full-height-container">
         <div class="row full-height-row">
-            <!-- Left Column - Favicon Image -->
-            <div id="favicon_column" class="col-md-6">
+            <!-- Left Column - ERD Image -->
+            <div id="erd_column" class="col-md-6">
                 <div class="card mb-4 full-height-card">
-                    <div class="card-body favicon-container">
-                        <img src="{{ url_for('static', filename='favicon.png') }}" alt="Logo" class="favicon-img">
+                    <div class="card-body erd-container">
+                        <img src="{{ url_for('static', filename='erd.webp') }}" alt="Entity-Relationship Diagram"
+                             class="erd-img">
+                        <p class="mt-3 text-start">This entity-relationship diagram shows the relationships among the
+                            major entities in the database that appear on the roster. It shows how the junction record
+                            'term' resolves the many-to-many relationship between 'office' and 'person' records.</p>
                     </div>
                 </div>
             </div>
@@ -470,19 +487,62 @@
                         <div class="row h-100">
                             <!-- Left Column - Buttons -->
                             <div class="col-md-6">
-                                <div class="d-flex flex-column justify-content-start h-100">
-                                    <button type="button" id="btn_expiring" class="btn btn-primary mb-3">Expiring Terms</button>
-                                    <button type="button" id="btn_long_form" class="btn btn-primary mb-3">Long Form Roster</button>
-                                    <button type="button" id="btn_short_form" class="btn btn-primary mb-3">Short Form Roster</button>
-                                    <button type="button" id="btn_vacancies" class="btn btn-primary mb-3">Vacancies</button>
+                                <div class="card h-100">
+                                    <div class="card-header d-flex align-items-center">
+                                        <h5 class="mb-0">Click to Refresh</h5>
+                                        <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                           data-bs-placement="right"
+                                           title="Click the buttons below to refresh reports using the latest updates"></i>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex flex-column justify-content-start h-100">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <button type="button" id="btn_expiring"
+                                                        class="btn btn-primary btn-equal-width">Expiring Terms
+                                                </button>
+                                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                                   data-bs-placement="right"
+                                                   title="Shows all terms ending by the end of the year"></i>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-3">
+                                                <button type="button" id="btn_long_form"
+                                                        class="btn btn-primary btn-equal-width">Long Form
+                                                    Roster
+                                                </button>
+                                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                                   data-bs-placement="right"
+                                                   title="Complete roster showing all bodies, offices, and terms with full details"></i>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-3">
+                                                <button type="button" id="btn_short_form"
+                                                        class="btn btn-primary btn-equal-width">Short Form
+                                                    Roster
+                                                </button>
+                                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                                   data-bs-placement="right"
+                                                   title="Condensed roster showing current office holders without personal information"></i>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-3">
+                                                <button type="button" id="btn_vacancies"
+                                                        class="btn btn-primary btn-equal-width">Vacancies
+                                                </button>
+                                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                                   data-bs-placement="right"
+                                                   title="List of all currently vacant positions across all bodies"></i>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Right Column - Display Window -->
                             <div class="col-md-6 h-100">
                                 <div class="card h-100">
-                                    <div class="card-header">
-                                        <h5>Available Reports</h5>
+                                    <div class="card-header d-flex align-items-center">
+                                        <h5 class="mb-0">Available Reports</h5>
+                                        <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                           data-bs-placement="right"
+                                           title="Select a report from this list and click 'View' to open it in a new tab"></i>
                                     </div>
                                     <div class="card-body">
                                         <div id="pdfFilesList" class="list-group mb-3">

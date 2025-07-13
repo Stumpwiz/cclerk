@@ -372,7 +372,7 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             fetch('/api/office/update', {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
@@ -402,19 +402,34 @@
                 // Get the CSRF token from the meta tag
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                fetch(`/api/office/delete?id=${officeId}`, {
-                    method: 'DELETE',
+                fetch('/api/office/delete', {
+                    method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
-                    }
+                    },
+                    body: JSON.stringify({
+                        id: officeId
+                    })
                 })
-                    .then(response => response.json())
-                    .then(() => {
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.error || 'Failed to delete office');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
                         // Refresh both the bodies list and the offices list for the selected body
                         fetchBodies(selectedBodyId);
                         fetchOfficesForBody(selectedBodyId);
+                        alert('Office deleted successfully');
                     })
-                    .catch(error => console.error('Error deleting office:', error));
+                    .catch(error => {
+                        console.error('Error deleting office:', error);
+                        alert('Failed to delete office: ' + error.message);
+                    });
             }
         }
     </script>

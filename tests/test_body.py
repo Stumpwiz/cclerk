@@ -4,14 +4,14 @@ from models.body import Body
 from extensions import db
 
 def test_update_body_api(authenticated_client, test_data):
-    """Test the PUT /api/body/update route."""
+    """Test the POST /api/body/update route."""
     # Get a body from test_data
     with authenticated_client.application.app_context():
         body = Body.query.first()
         body_id = body.body_id
 
     # Update the body
-    response = authenticated_client.put("/api/body/update", json={
+    response = authenticated_client.post("/api/body/update", json={
         "id": body_id,
         "name": "Updated Body Name",
         "mission": "Updated Mission",
@@ -33,7 +33,7 @@ def test_update_body_api(authenticated_client, test_data):
         assert updated_body.body_precedence == 5.0
 
 def test_delete_body_api(authenticated_client, test_data, app):
-    """Test the DELETE /api/body/delete route."""
+    """Test the POST /api/body/delete route."""
     # Create a body to delete
     with app.app_context():
         body = Body(name="Body to Delete", mission="Delete Me", body_precedence=10.0)
@@ -42,7 +42,7 @@ def test_delete_body_api(authenticated_client, test_data, app):
         body_id = body.body_id
 
     # Delete the body
-    response = authenticated_client.delete(f"/api/body/delete?id={body_id}")
+    response = authenticated_client.post("/api/body/delete", json={"id": body_id})
 
     assert response.status_code == 200
     json_data = response.get_json()
@@ -54,7 +54,7 @@ def test_delete_body_api(authenticated_client, test_data, app):
         assert deleted_body is None
 
 def test_delete_body_with_offices_api(authenticated_client, test_data, app):
-    """Test the DELETE /api/body/delete route when body has associated offices."""
+    """Test the POST /api/body/delete route when body has associated offices."""
     # Create a body to delete
     with app.app_context():
         from models.office import Office
@@ -70,7 +70,7 @@ def test_delete_body_with_offices_api(authenticated_client, test_data, app):
         db.session.commit()
 
     # Try to delete the body
-    response = authenticated_client.delete(f"/api/body/delete?id={body_id}")
+    response = authenticated_client.post("/api/body/delete", json={"id": body_id})
 
     # Should fail with 400 status code
     assert response.status_code == 400

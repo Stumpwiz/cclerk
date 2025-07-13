@@ -214,7 +214,10 @@
                         personIdSelect.appendChild(createOption);
                     });
                 })
-                .catch(error => console.error('Error fetching persons:', error));
+                .catch(error => {
+                    console.error('Error fetching persons:', error);
+                    alert('Failed to load persons. Please refresh the page and try again.');
+                });
         }
 
         // Function to fetch all bodies from the API
@@ -261,7 +264,10 @@
                                         officeIdSelect.appendChild(option);
                                     });
                                 })
-                                .catch(error => console.error('Error fetching offices for body:', error));
+                                .catch(error => {
+                                    console.error('Error fetching offices for body:', error);
+                                    alert('Failed to load offices for the selected body. Please try selecting a different body.');
+                                });
                         } else {
                             // If no body selected, fetch all offices
                             fetch('/api/office/get')
@@ -276,11 +282,17 @@
                                         officeIdSelect.appendChild(option);
                                     });
                                 })
-                                .catch(error => console.error('Error fetching all offices:', error));
+                                .catch(error => {
+                                    console.error('Error fetching all offices:', error);
+                                    alert('Failed to load offices. Please refresh the page and try again.');
+                                });
                         }
                     });
                 })
-                .catch(error => console.error('Error fetching bodies:', error));
+                .catch(error => {
+                    console.error('Error fetching bodies:', error);
+                    alert('Failed to load bodies. Please refresh the page and try again.');
+                });
         }
 
         // Function to fetch offices from the API, optionally filtered by body_id
@@ -317,7 +329,10 @@
                         officeIdSelect.appendChild(createOption);
                     });
                 })
-                .catch(error => console.error('Error fetching offices:', error));
+                .catch(error => {
+                    console.error('Error fetching offices:', error);
+                    alert('Failed to load offices. Please refresh the page and try again.');
+                });
         }
 
         // Function to fetch terms from the API
@@ -355,13 +370,20 @@
                                 // Update the table with the filtered terms
                                 updateTermsTable(filteredTerms);
                             })
-                            .catch(error => console.error('Error fetching offices for body:', error));
+                            .catch(error => {
+                                console.error('Error fetching offices for body:', error);
+                                alert('Failed to load offices for filtering terms. Showing all terms instead.');
+                                updateTermsTable(terms); // Show all terms as fallback
+                            });
                     } else {
                         // If no bodyId, show all terms
                         updateTermsTable(terms);
                     }
                 })
-                .catch(error => console.error('Error fetching terms:', error));
+                .catch(error => {
+                    console.error('Error fetching terms:', error);
+                    alert('Failed to load terms. Please refresh the page and try again.');
+                });
         }
 
         // Function to update the "terms" table with the provided terms
@@ -481,14 +503,27 @@
                     ordinal: ordinal
                 }),
             })
-            .then(response => response.json())
-            .then(() => {
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to create term');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('createTermModal'));
                 modal.hide();
                 document.getElementById('createTermForm').reset();
                 fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value);
+                if (data.success) {
+                    alert('Term created successfully');
+                }
             })
-            .catch(error => console.error('Error creating term:', error));
+            .catch(error => {
+                console.error('Error creating term:', error);
+                alert('Failed to create term: ' + error.message);
+            });
         });
 
         // Update an existing term
@@ -503,7 +538,7 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             fetch('/api/term/update', {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
@@ -516,13 +551,24 @@
                     ordinal: ordinal
                 }),
             })
-            .then(response => response.json())
-            .then(() => {
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to update term');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editTermModal'));
                 modal.hide();
                 fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value);
+                alert('Term updated successfully');
             })
-            .catch(error => console.error('Error updating term:', error));
+            .catch(error => {
+                console.error('Error updating term:', error);
+                alert('Failed to update term: ' + error.message);
+            });
         });
 
         // Delete a term
@@ -531,17 +577,33 @@
                 // Get the CSRF token from the meta tag
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                fetch(`/api/term/delete?person_id=${personId}&office_id=${officeId}`, {
-                    method: 'DELETE',
+                fetch('/api/term/delete', {
+                    method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        person_id: personId,
+                        office_id: officeId
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Failed to delete term');
+                        });
                     }
+                    return response.json();
                 })
-                .then(response => response.json())
-                .then(() => {
+                .then(data => {
                     fetchTerms(document.getElementById('personFilter').value, document.getElementById('officeFilter').value);
+                    alert('Term deleted successfully');
                 })
-                .catch(error => console.error('Error deleting term:', error));
+                .catch(error => {
+                    console.error('Error deleting term:', error);
+                    alert('Failed to delete term: ' + error.message);
+                });
             }
         }
 

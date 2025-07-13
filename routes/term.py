@@ -138,8 +138,9 @@ def add_term():
     })
 
 
-@term_bp.route('/update', methods=['PUT'])
+@term_bp.route('/update', methods=['POST'])
 @handle_errors
+@login_required
 def update_term():
     """Update an existing term"""
     # Check if request contains valid JSON data
@@ -194,13 +195,19 @@ def update_term():
         "office_title": term.office.title
     })
 
-@csrf.exempt
-@term_bp.route('/delete', methods=['DELETE'])
+@term_bp.route('/delete', methods=['POST'])
 @handle_errors
+@login_required
 def delete_term():
     """Delete a term"""
-    person_id = request.args.get('person_id')
-    office_id = request.args.get('office_id')
+    # Check if request contains valid JSON data
+    if request.is_json:
+        data = request.json
+        person_id = data.get('person_id')
+        office_id = data.get('office_id')
+    else:
+        person_id = request.args.get('person_id')
+        office_id = request.args.get('office_id')
 
     if not person_id or not office_id:
         return jsonify({"error": "Person ID and Office ID are required"}), 400

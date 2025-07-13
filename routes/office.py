@@ -93,8 +93,9 @@ def add_office():
     })
 
 
-@office_bp.route('/update', methods=['PUT'])
+@office_bp.route('/update', methods=['POST'])
 @handle_errors
+@login_required
 def update_office():
     """Update an existing office"""
     # Check if request contains valid JSON data
@@ -132,11 +133,17 @@ def update_office():
     })
 
 
-@office_bp.route('/delete', methods=['DELETE'])
+@office_bp.route('/delete', methods=['POST'])
 @handle_errors
+@login_required
 def delete_office():
     """Delete an office"""
-    office_id = request.args.get('id')
+    # Check if request contains valid JSON data
+    if request.is_json:
+        data = request.json
+        office_id = data.get('id')
+    else:
+        office_id = request.args.get('id')
 
     if not office_id:
         return jsonify({"error": "Office ID is required"}), 400
