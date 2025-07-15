@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}Terms{% endblock %}
 {% block content %}
+    <style>
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+    </style>
     <div class="container">
         <h2 class="mb-4">Terms</h2>
 
@@ -94,15 +102,30 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="start" class="form-label">Start Date</label>
+                            <label for="start" class="form-label d-flex align-items-center">
+                                Start Date
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Start date must fall after the system date in order for the person to appear in a roster report"></i>
+                            </label>
                             <input type="date" class="form-control" id="start" name="start">
                         </div>
                         <div class="mb-3">
-                            <label for="end" class="form-label">End Date</label>
+                            <label for="end" class="form-label d-flex align-items-center">
+                                End Date
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="For an elected office, enter the date the incumbent's term expires; for an appointed office enter 12/31/9999"></i>
+                            </label>
                             <input type="date" class="form-control" id="end" name="end">
                         </div>
                         <div class="mb-3">
-                            <label for="ordinal" class="form-label">Ordinal</label>
+                            <label for="ordinal" class="form-label d-flex align-items-center">
+                                Ordinal
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="For an elected office, choose First or Second; for an appointed office, choose None"></i>
+                            </label>
                             <select class="form-select" id="ordinal" name="ordinal">
                                 <option value="" selected>None</option>
                                 <option value="First">First</option>
@@ -177,6 +200,10 @@
             fetchOffices();
             // Initial fetch of terms with empty filters
             fetchTerms('', '', '');
+
+            // Initialize all tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
             // Add an event listener for when the "create term" modal is shown
             document.getElementById('createTermModal').addEventListener('shown.bs.modal', function() {

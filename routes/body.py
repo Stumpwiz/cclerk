@@ -35,8 +35,6 @@ def get_bodies():
     } for body in bodies])
 
 
-
-
 @body_bp.route('/add', methods=['POST'])
 @handle_errors
 @login_required
@@ -247,7 +245,9 @@ def delete_body_html():
     from models.office import Office
     offices = Office.query.filter_by(office_body_id=body.body_id).all()
     if offices:
-        flash(f'Cannot delete body "{body.name}" because it has {len(offices)} office(s) associated with it. Please delete or reassign these offices first.', 'danger')
+        flash(
+            f'Cannot delete body "{body.name}" because it has {len(offices)} office(s) associated with it. Please delete or reassign these offices first.',
+            'danger')
         return redirect(url_for('body.view_bodies'))
 
     name = body.name

@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}Letters{% endblock %}
 {% block content %}
+    <style>
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+    </style>
     <div class="container">
         <h2 class="mb-4">Letters And Template Management</h2>
 
@@ -9,6 +17,10 @@
             document.addEventListener('DOMContentLoaded', function () {
                 // Focus on the recipient field when the page loads
                 document.getElementById('recipient').focus();
+
+                // Initialize all tooltips
+                const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
                 // Add an event listener for when the edit template modal is shown
                 document.getElementById('editTemplateModal').addEventListener('shown.bs.modal', function () {
@@ -176,8 +188,11 @@
 
         <!-- Template Display Div (Below) -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h3>Current Template</h3>
+            <div class="card-header d-flex align-items-center">
+                <h3 class="mb-0">Current Template</h3>
+                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                   data-bs-placement="right"
+                   title="Don't edit this LaTeX source code unless you know what you're doing"></i>
             </div>
             <div class="card-body">
                 {% if template %}

@@ -24,6 +24,13 @@
         .list-group-item:hover .office-actions {
             visibility: visible;
         }
+
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
     </style>
 {% endblock %}
 
@@ -86,7 +93,12 @@
                         </div>
                         <input type="hidden" id="bodyId" name="bodyId">
                         <div class="mb-3">
-                            <label for="precedence" class="form-label">Precedence</label>
+                            <label for="precedence" class="form-label d-flex align-items-center">
+                                Precedence
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Precedence is a real (floating point) number that determines where the holder of this office appears in roster reports"></i>
+                            </label>
                             <input type="number" class="form-control" id="precedence" name="precedence" step="0.1"
                                    value="0">
                         </div>
@@ -146,6 +158,10 @@
 
         // Fetch and display all bodies when the page loads
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize all tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
             fetchBodies(); // No specific body to select on initial load
         });
 

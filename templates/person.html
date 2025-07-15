@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}Persons{% endblock %}
 {% block content %}
+    <style>
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+    </style>
     <div class="container">
         <h2 class="mb-4">Persons</h2>
 
@@ -46,23 +54,48 @@
                 <div class="modal-body">
                     <form id="createPersonForm">
                         <div class="mb-3">
-                            <label for="first" class="form-label">First Name</label>
+                            <label for="first" class="form-label d-flex align-items-center">
+                                First Name
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Don't add titles like 'Father,' 'Sister,' 'Msgr.,' etc."></i>
+                            </label>
                             <input type="text" class="form-control" id="first" name="first">
                         </div>
                         <div class="mb-3">
-                            <label for="last" class="form-label">Last Name</label>
+                            <label for="last" class="form-label d-flex align-items-center">
+                                Last Name
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Compound or hyphenated last names are OK, but suffixes like 'Jr.,' 'III,' 'MD,' 'PhD,' etc. are not used"></i>
+                            </label>
                             <input type="text" class="form-control" id="last" name="last" required>
                         </div>
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label d-flex align-items-center">
+                                Email
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Basic checks are made to check email address format"></i>
+                            </label>
                             <input type="email" class="form-control" id="email" name="email">
                         </div>
                         <div class="mb-3">
-                            <label for="phone" class="form-label">Phone</label>
+                            <label for="phone" class="form-label d-flex align-items-center">
+                                Phone
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Format: (NXN) NXX-XXXX — N is 1–9, X is 0–9. Example: (212) 555-1234"></i>
+                            </label>
                             <input type="tel" class="form-control" id="phone" name="phone">
                         </div>
                         <div class="mb-3">
-                            <label for="apt" class="form-label">Apartment</label>
+                            <label for="apt" class="form-label d-flex align-items-center">
+                                Apartment
+                                <i class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                   data-bs-placement="right"
+                                   title="Format: 4 characters — 1st is L, K, or S; 2nd is 1–9; 3rd is 0–9; 4th is 1–9"></i>
+                            </label>
                             <input type="text" class="form-control" id="apt" name="apt">
                         </div>
                     </form>
@@ -124,6 +157,10 @@
         // Fetch and display all persons when the page loads
         document.addEventListener('DOMContentLoaded', function() {
             fetchPersons();
+
+            // Initialize all tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 
             // Add an event listener for when the "create person" modal is shown
             document.getElementById('createPersonModal').addEventListener('shown.bs.modal', function() {

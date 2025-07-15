@@ -1,13 +1,22 @@
 {% extends 'base.html' %}
 {% block title %}Bodies{% endblock %}
 {% block content %}
+    <style>
+        .help-icon {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            cursor: help;
+        }
+    </style>
     <div class="container">
         <h2 class="mb-4">Administrative Bodies</h2>
 
         <!-- Top section with a button -->
         <div class="mb-4">
             <!-- Button to trigger create modal -->
-            <button type="button" class="btn btn-success create-body-btn" data-bs-toggle="modal" data-bs-target="#createBodyModal">
+            <button type="button" class="btn btn-success create-body-btn" data-bs-toggle="modal"
+                    data-bs-target="#createBodyModal">
                 Create New Body
             </button>
         </div>
@@ -21,37 +30,41 @@
                 <div class="table-responsive">
                     <table class="table table-striped body-table">
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Mission</th>
-                                <th>Precedence</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>Name</th>
+                            <th>Mission</th>
+                            <th>Precedence</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody id="bodiesTableBody">
-                            {% if bodies %}
-                                {% for body in bodies %}
-                                    <tr class="body-row" data-id="{{ body.body_id }}">
-                                        <td>{{ body.name }}</td>
-                                        <td class="mission-cell">{{ body.mission or '' }}</td>
-                                        <td>{{ body.body_precedence }}</td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <button class="btn btn-sm btn-primary edit-btn" data-id="{{ body.body_id }}">Edit</button>
-                                                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ body.body_id }}">Delete</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                <tr>
-                                    <td colspan="5" class="text-center">
-                                        <div class="alert alert-info mb-0">
-                                            No bodies available.
+                        {% if bodies %}
+                            {% for body in bodies %}
+                                <tr class="body-row" data-id="{{ body.body_id }}">
+                                    <td>{{ body.name }}</td>
+                                    <td class="mission-cell">{{ body.mission or '' }}</td>
+                                    <td>{{ body.body_precedence }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-primary edit-btn"
+                                                    data-id="{{ body.body_id }}">Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-danger delete-btn"
+                                                    data-id="{{ body.body_id }}">Delete
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
-                            {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">
+                                    <div class="alert alert-info mb-0">
+                                        No bodies available.
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -60,7 +73,8 @@
     </div>
 
     <!-- Create Body Modal -->
-    <div class="modal fade" id="createBodyModal" tabindex="-1" aria-labelledby="createBodyModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createBodyModal" tabindex="-1" aria-labelledby="createBodyModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -79,8 +93,13 @@
                             <textarea class="form-control" id="mission" name="mission" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="precedence" class="form-label">Precedence</label>
-                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1" value="0">
+                            <label for="precedence" class="form-label">Precedence <i
+                                    class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                    data-bs-placement="right"
+                                    title="Determines the order in which the body appears on the reports generated on
+                                    the home page; the lower the number, the earlier it appears."></i></label>
+                            <input type="number" class="form-control" id="precedence" name="precedence" step="0.1"
+                                   value="0">
                         </div>
                     </form>
                 </div>
@@ -113,7 +132,10 @@
                             <textarea class="form-control" id="editMission" name="mission" rows="3"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label for="editPrecedence" class="form-label">Precedence</label>
+                            <label for="editPrecedence" class="form-label">Precedence <i
+                                    class="bi bi-question-circle help-icon" data-bs-toggle="tooltip"
+                                    data-bs-placement="right"
+                                    title="Determines the order in which the body appears on the reports generated on the home page."></i></label>
                             <input type="number" class="form-control" id="editPrecedence" name="precedence" step="0.1">
                         </div>
                     </form>
@@ -138,10 +160,14 @@
         // noinspection JSUnresolvedVariable
         // The following code uses variables from database tables that will be resolved at runtime
         // Add event listeners when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize all tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
             // Add event listeners to edit and delete buttons
             document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', function (e) {
                     e.stopPropagation(); // Prevent row click event
                     const bodyId = this.getAttribute('data-id');
                     openEditModal(bodyId);
@@ -149,7 +175,7 @@
             });
 
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', function (e) {
                     e.stopPropagation(); // Prevent row click event
                     const bodyId = this.getAttribute('data-id');
                     deleteBody(bodyId);
@@ -158,7 +184,7 @@
 
             // Add event listeners to body rows for selection
             document.querySelectorAll('.body-row').forEach(row => {
-                row.addEventListener('click', function() {
+                row.addEventListener('click', function () {
                     selectBody(this);
                 });
             });
@@ -170,7 +196,7 @@
             }
 
             // Add an event listener for when the create-body modal is shown
-            document.getElementById('createBodyModal').addEventListener('shown.bs.modal', function() {
+            document.getElementById('createBodyModal').addEventListener('shown.bs.modal', function () {
                 // Focus on the name field
                 document.getElementById('name').focus();
             });
@@ -206,13 +232,13 @@
         }
 
         // Create a new body
-        document.getElementById('createBodyBtn').addEventListener('click', function() {
+        document.getElementById('createBodyBtn').addEventListener('click', function () {
             // Submit the form directly
             document.getElementById('createBodyForm').submit();
         });
 
         // Update an existing body
-        document.getElementById('updateBodyBtn').addEventListener('click', function() {
+        document.getElementById('updateBodyBtn').addEventListener('click', function () {
             // Submit the form directly
             document.getElementById('editBodyForm').submit();
         });
