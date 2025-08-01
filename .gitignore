@@ -15,6 +15,7 @@
   files_db_backups/*
   files_letters/*
   files_roster_reports/*
+  test_reports/*
 
 
   # Logs
@@ -28,3 +29,4 @@
 /files_db_backups/
 *.sql
 /scripts/
+scripts/*
