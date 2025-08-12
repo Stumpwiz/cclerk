@@ -6,6 +6,7 @@ from routes import register_blueprints
 
 from dotenv import load_dotenv
 import os
+from sqlalchemy.pool import NullPool
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
@@ -26,9 +27,27 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # Initialize extensions
+    # In testing, use NullPool so connections are not kept open between usages to reduce ResourceWarnings
+    if app.config.get("TESTING"):
+        app.config.setdefault('SQLALCHEMY_ENGINE_OPTIONS', {})
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'].setdefault('poolclass', NullPool)
     db.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
+
+    # App-level teardown handlers to ensure sessions/connections are cleaned up
+    @app.teardown_appcontext
+    def _shutdown_session(exception=None):
+        # Ensure scoped session is removed at the end of each app/request context
+        # Addresses ResourceWarnings about unclosed connections by letting SQLAlchemy return them to the pool
+        db.session.remove()
+
+    @app.teardown_request
+    def _shutdown_session_request(exception=None):
+        # Also clear the scoped session after each request explicitly (helps tests using test_client)
+        db.session.remove()
+
+
 
     # Routes are now defined in blueprint files in the routes/ directory
     # - Main routes (/, /favicon.ico) are in routes/main_routes.py

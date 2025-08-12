@@ -255,8 +255,10 @@ class TestTermModel:
             assert deleted_term is None
 
             # Verify the associated Person and Office still exist
-            person = Person.query.get(1)
-            office = Office.query.get(1)
+            # SQLAlchemy 2.x deprecation: Query.get() is legacy; use Session.get(Model, pk)
+            # See https://sqlalche.me/e/b8d9
+            person = db.session.get(Person, 1)
+            office = db.session.get(Office, 1)
             assert person is not None
             assert office is not None
 

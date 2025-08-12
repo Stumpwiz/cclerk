@@ -15,12 +15,24 @@
         <script>
             /* global bootstrap */
             document.addEventListener('DOMContentLoaded', function () {
-                // Focus on the recipient field when the page loads
-                document.getElementById('recipient').focus();
+                // Focus on the Move-In Date field when the page loads
+                const moveInDateInput = document.getElementById('move_in_date');
+                const moveInDateFeedback = document.getElementById('moveInDateFeedback');
+                if (moveInDateInput) {
+                    moveInDateInput.focus();
+                }
 
                 // Initialize all tooltips
                 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
                 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+                // Optional: clear invalid state on input for Move-In Date
+                if (moveInDateInput) {
+                    moveInDateInput.addEventListener('input', () => {
+                        moveInDateInput.classList.remove('is-invalid');
+                        if (moveInDateFeedback) moveInDateFeedback.textContent = '';
+                    });
+                }
 
                 // Add an event listener for when the edit template modal is shown
                 document.getElementById('editTemplateModal').addEventListener('shown.bs.modal', function () {
@@ -37,6 +49,39 @@
                 // Handle the generate letter form submission
                 document.getElementById('generateLetterForm').addEventListener('submit', function(e) {
                     e.preventDefault();
+
+                    // Validate Move-In Date before proceeding
+                    const dateStr = moveInDateInput ? moveInDateInput.value.trim() : '';
+                    const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
+
+                    let dateValid = true;
+                    let errorMsg = '';
+
+                    if (!dateStr) {
+                        dateValid = false;
+                        errorMsg = 'Move-In Date is required.';
+                    } else if (!isoPattern.test(dateStr)) {
+                        dateValid = false;
+                        errorMsg = 'Date must match YYYY-MM-DD.';
+                    } else {
+                        // Check if it is a real calendar date
+                        const [y, m, d] = dateStr.split('-').map(Number);
+                        const dt = new Date(Date.UTC(y, m - 1, d));
+                        // Validate reconstructed components to avoid JS Date leniency
+                        if (dt.getUTCFullYear() !== y || (dt.getUTCMonth() + 1) !== m || dt.getUTCDate() !== d) {
+                            dateValid = false;
+                            errorMsg = 'Please enter a valid calendar date.';
+                        }
+                    }
+
+                    if (!dateValid) {
+                        if (moveInDateInput) moveInDateInput.classList.add('is-invalid');
+                        if (moveInDateFeedback) moveInDateFeedback.textContent = errorMsg;
+                        return; // stop submission
+                    } else {
+                        if (moveInDateInput) moveInDateInput.classList.remove('is-invalid');
+                        if (moveInDateFeedback) moveInDateFeedback.textContent = '';
+                    }
 
                     // Get the button and disable it
                     const button = document.getElementById('generateLetterBtn');
@@ -97,6 +142,15 @@
                     <div class="card-body">
                         <form id="generateLetterForm" method="POST" action="{{ url_for('letters.generate_letter') }}">
                             {{ form.csrf_token }}
+                            <!-- Insert this new block directly above the existing Recipient(s) mb-3 block -->
+                            <div class="mb-3">
+                              <label for="move_in_date" class="form-label">Move-In Date</label>
+                              <input type="text" class="form-control" id="move_in_date" name="move_in_date" required
+                                     placeholder="YYYY-MM-DD" aria-describedby="moveInDateHelp moveInDateFeedback">
+                              <small id="moveInDateHelp" class="text-muted">Format: YYYY-MM-DD</small>
+                              <div id="moveInDateFeedback" class="invalid-feedback"></div>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="recipient" class="form-label">Recipient(s)</label>
                                 <input type="text" class="form-control" id="recipient" name="recipient" required>

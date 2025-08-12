@@ -1,20 +1,16 @@
-# Required for production environment on Oberhaus.
+# /var/www/clerk-app/clerk.wsgi
+import os, sys, logging
+sys.path.insert(0, "/var/www/clerk-app")
 
-import sys
-import os
-from dotenv import load_dotenv
-
-# Ensure the app directory is in the Python path
-sys.path.insert(0, "C:/FlaskApp")
-os.environ['PYTHONUNBUFFERED'] = '1'
-
-load_dotenv("C:/FlaskApp/.env")
-from app import create_app
-
+# Load env vars from .env
 try:
-    application = create_app()
-except Exception as e:
-    import traceback
-    with open("C:/FlaskApp/wsgi_error.log", "w") as f:
-        traceback.print_exc(file=f)
-    raise
+    from dotenv import load_dotenv
+    load_dotenv("/var/www/clerk-app/.env")
+except Exception:
+    pass  # keep going even if dotenv isn't installed
+
+logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+
+from app import create_app  # adjust if your factory lives elsewhere
+application = create_app()
+logging.info("WSGI app loaded")

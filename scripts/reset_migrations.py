@@ -40,21 +40,19 @@ def reset_migrations():
     # Check if the database exists
     if os.path.exists(db_path):
         try:
-            # Connect to the database
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            
-            # Check if alembic_version table exists
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='alembic_version';")
-            if cursor.fetchone():
-                # Drop the alembic_version table
-                cursor.execute("DROP TABLE alembic_version;")
-                conn.commit()
-                print("\nSuccessfully dropped the alembic_version table from the database.")
-            else:
-                print("\nThe alembic_version table does not exist in the database.")
-            
-            conn.close()
+            # Connect to the database using a context manager to ensure closure
+            with sqlite3.connect(db_path) as conn:
+                cursor = conn.cursor()
+
+                # Check if alembic_version table exists
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='alembic_version';")
+                if cursor.fetchone():
+                    # Drop the alembic_version table
+                    cursor.execute("DROP TABLE alembic_version;")
+                    conn.commit()
+                    print("\nSuccessfully dropped the alembic_version table from the database.")
+                else:
+                    print("\nThe alembic_version table does not exist in the database.")
         except sqlite3.Error as e:
             print(f"\nError working with the database: {e}")
             print("You may need to manually delete the alembic_version table from the database.")

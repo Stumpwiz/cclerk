@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import os
 import subprocess
 import re
+from datetime import datetime
 from extensions import db
 from models.letters import LetterTemplate
 from forms import CSRFForm
@@ -57,9 +58,37 @@ def get_letters_html():
     pdf_files = []
 
     if os.path.exists(files_letters_dir):
-        # Get all PDF files and sort them alphabetically
-        pdf_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
-        pdf_files.sort()
+        # Gather all PDF files
+        all_pdfs = [f for f in os.listdir(files_letters_dir) if f.endswith('.pdf')]
+
+        # Partition into dated and undated using prefix YYYY-MM-DD_
+        dated = []
+        undated = []
+
+        date_prefix_re = re.compile(r'^(\d{4}-\d{2}-\d{2})_')
+
+        for fname in all_pdfs:
+            m = date_prefix_re.match(fname)
+            if m:
+                date_str = m.group(1)
+                try:
+                    # Parse to ensure valid date for sorting
+                    dt = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    dated.append((dt, fname))
+                except ValueError:
+                    # If the prefix isn't a real date, treat as undated
+                    undated.append(fname)
+            else:
+                undated.append(fname)
+
+        # Sort dated ascending by date (earliest at the top)
+        dated.sort(key=lambda t: t[0])
+
+        # Sort undated alphabetically (to keep a stable, predictable order)
+        undated.sort()
+
+        # Flatten back into a single list: dated first (by ascending date), then undated
+        pdf_files = [fname for _, fname in dated] + undated
 
     # Create a CSRF form
     form = CSRFForm()
@@ -174,6 +203,7 @@ def generate_letter():
     recipient = request.form.get('recipient')
     salutation = request.form.get('salutation')
     apartment = request.form.get('apartment')
+    move_in_date = request.form.get('move_in_date', '').strip()
 
     # Get the template
     template = LetterTemplate.get_singleton()
@@ -181,13 +211,13 @@ def generate_letter():
     if not template:
         return {'success': False, 'error': 'No template found. Please create a template first.'}
 
-    # Extract the last name from the recipient field (last word)
-    last_name = recipient.split()[-1]
+    # Extract last name from the recipient (last word)
+    last_name = (recipient or '').split()[-1] if recipient else 'Unknown'
 
     # Sanitize the input fields to ensure they don't contain problematic LaTeX characters
-    recipient_safe = sanitize_latex(recipient)
-    salutation_safe = sanitize_latex(salutation)
-    apartment_safe = sanitize_latex(apartment)
+    recipient_safe = sanitize_latex(recipient or '')
+    salutation_safe = sanitize_latex(salutation or '')
+    apartment_safe = sanitize_latex(apartment or '')
 
     # Create the LaTeX commands for the input fields
     recipient_command = f"\\newcommand{{\\names}}{{{recipient_safe}}}"
@@ -208,17 +238,18 @@ def generate_letter():
         os.makedirs(files_letters_dir, exist_ok=True)
         # print(f"Created files_letters directory: {files_letters_dir}")
 
-    # Path to the final PDF file
-    final_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
+    # Build the base filename using move-in date if provided
+    # Expected move_in_date format is YYYY-MM-DD from the client; if missing, fall back.
+    safe_base = f"{move_in_date}_{last_name}" if move_in_date else f"{last_name}"
 
     try:
         # Create the .tex file
-        tex_file_path = os.path.join(files_letters_dir, f"{last_name}.tex")
+        tex_file_path = os.path.join(files_letters_dir, f"{safe_base}.tex")
         with open(tex_file_path, 'w', encoding='utf-8') as tex_file:
             tex_file.write(tex_content)
 
         # Path to the output PDF file
-        temp_pdf_path = os.path.join(files_letters_dir, f"{last_name}.pdf")
+        temp_pdf_path = os.path.join(files_letters_dir, f"{safe_base}.pdf")
 
         try:
             # Use xelatex from the system PATH instead of hard-coding the path
@@ -264,7 +295,7 @@ def generate_letter():
                             current_app.logger.error(f"Error deleting auxiliary file {file}: {del_error}")
 
                 # If we reach here, the PDF was generated successfully
-                return {'success': True, 'filename': f"{last_name}.pdf"}
+                return {'success': True, 'filename': f"{safe_base}.pdf"}
             else:
                 # Check for log files that might contain error information
                 log_files = [f for f in os.listdir(files_letters_dir) if f.endswith('.log')]

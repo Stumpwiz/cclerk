@@ -14,6 +14,19 @@ from models.report_record import ReportRecord
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+# Ensure the ORM session is cleared after every test to prevent lingering connections
+@pytest.fixture(autouse=True)
+def _cleanup_db_session(app):
+    # Autouse ensures cleanup runs after every test; depend on app fixture so we have a valid context
+    yield
+    with app.app_context():
+        # Clear the scoped session and dispose connections to avoid ResourceWarnings
+        db.session.remove()
+        try:
+            db.engine.dispose()
+        except Exception:
+            pass
+
 # Enable foreign key constraints for all SQLite connections
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
