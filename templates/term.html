@@ -155,12 +155,20 @@
                         <input type="hidden" id="editPersonId">
                         <input type="hidden" id="editOfficeId">
                         <div class="mb-3">
-                            <label for="editPersonName" class="form-label">Person</label>
-                            <input type="text" class="form-control" id="editPersonName" readonly>
+                            <label for="editPersonName" class="form-label d-flex align-items-center">
+                                Person
+                                <i class="bi bi-lock-fill text-secondary ms-2" aria-hidden="true"></i>
+                            </label>
+                            <input type="text" class="form-control-plaintext" id="editPersonName" readonly aria-describedby="editPersonHelp">
+                            <div id="editPersonHelp" class="form-text">This value cannot be edited from the Term modal. To change it, edit the Person on the Person page.</div>
                         </div>
                         <div class="mb-3">
-                            <label for="editOfficeTitle" class="form-label">Office</label>
-                            <input type="text" class="form-control" id="editOfficeTitle" readonly>
+                            <label for="editOfficeTitle" class="form-label d-flex align-items-center">
+                                Office
+                                <i class="bi bi-lock-fill text-secondary ms-2" aria-hidden="true"></i>
+                            </label>
+                            <input type="text" class="form-control-plaintext" id="editOfficeTitle" readonly aria-describedby="editOfficeHelp">
+                            <div id="editOfficeHelp" class="form-text">This value cannot be edited from the Term modal. To change it, edit the Office on the Office page.</div>
                         </div>
                         <div class="mb-3">
                             <label for="editStart" class="form-label">Start Date</label>
