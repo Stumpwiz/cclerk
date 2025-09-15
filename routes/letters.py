@@ -203,7 +203,22 @@ def generate_letter():
     recipient = request.form.get('recipient')
     salutation = request.form.get('salutation')
     apartment = request.form.get('apartment')
-    move_in_date = request.form.get('move_in_date', '').strip()
+    # Accept letter_date from the form (renamed from move_in_date)
+    letter_date_raw = request.form.get('letter_date', '').strip()
+
+    # Parse the provided date; fallback to today on missing/invalid
+    effective_date = None
+    if letter_date_raw:
+        try:
+            effective_date = datetime.strptime(letter_date_raw, '%Y-%m-%d').date()
+        except ValueError:
+            current_app.logger.warning(f"Invalid letter_date received: '{letter_date_raw}'. Falling back to today.")
+    if effective_date is None:
+        effective_date = datetime.today().date()
+
+    # Format for LaTeX date and ISO for filename prefix
+    formatted_letter_date = effective_date.strftime('%B %d, %Y').replace(' 0', ' ')
+    effective_date_iso = effective_date.strftime('%Y-%m-%d')
 
     # Get the template
     template = LetterTemplate.get_singleton()
@@ -223,13 +238,15 @@ def generate_letter():
     recipient_command = f"\\newcommand{{\\names}}{{{recipient_safe}}}"
     salutation_command = f"\\newcommand{{\\salutation}}{{{salutation_safe}}}"
     apartment_command = f"\\newcommand{{\\apartment}}{{{apartment_safe}}}"
+    # Set the LaTeX date to the chosen/effective letter date
+    date_command = f"\\date{{{formatted_letter_date}}}"
 
     # Sanitize the template header and body
     header_safe = re.sub(r"(\r\n|\r|\n)+", "\n", template.header.strip())
     body_safe = re.sub(r"(\r\n|\r|\n)+", "\n", template.body.strip())
 
     # Combine the header, commands, and body into a complete LaTeX document
-    tex_content = f"{header_safe}\n{recipient_command}\n{salutation_command}\n{apartment_command}\n{body_safe}"
+    tex_content = f"{header_safe}\n{recipient_command}\n{salutation_command}\n{apartment_command}\n{date_command}\n{body_safe}"
 
     # Use the dedicated files_letters directory
     # This avoids creating and cleaning up temporary directories for each letter generation
@@ -238,9 +255,9 @@ def generate_letter():
         os.makedirs(files_letters_dir, exist_ok=True)
         # print(f"Created files_letters directory: {files_letters_dir}")
 
-    # Build the base filename using move-in date if provided
-    # Expected move_in_date format is YYYY-MM-DD from the client; if missing, fall back.
-    safe_base = f"{move_in_date}_{last_name}" if move_in_date else f"{last_name}"
+    # Build the base filename using the effective ISO letter date if available
+    # Example: 2025-09-01_Smith.pdf; if last_name missing, still include date
+    safe_base = f"{effective_date_iso}_{last_name}" if last_name else f"{effective_date_iso}"
 
     try:
         # Create the .tex file
